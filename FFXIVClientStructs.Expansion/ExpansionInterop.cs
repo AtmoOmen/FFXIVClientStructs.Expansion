@@ -1,4 +1,4 @@
-using FFXIVClientStructs.Expansion.Runtime.Generated;
+using FFXIVClientStructs.Expansion.Interop.Generated;
 using FFXIVClientStructs.Expansion.Runtime;
 
 namespace FFXIVClientStructs.Expansion;
