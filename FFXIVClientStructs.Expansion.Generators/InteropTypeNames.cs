@@ -1,0 +1,25 @@
+namespace FFXIVClientStructs.Expansion.Generators;
+
+public static class InteropTypeNames {
+    private const string AttributeNamespace = "FFXIVClientStructs.Expansion.Runtime.Attributes";
+
+    public const string GenerateInteropAttribute = AttributeNamespace + ".GenerateInteropAttribute";
+    public const string MemberFunctionAttribute = AttributeNamespace + ".MemberFunctionAttribute";
+    public const string VirtualFunctionAttribute = AttributeNamespace + ".VirtualFunctionAttribute";
+    public const string StaticAddressAttribute = AttributeNamespace + ".StaticAddressAttribute";
+    public const string VirtualTableAttribute = AttributeNamespace + ".VirtualTableAttribute";
+    public const string GenerateStringOverloadsAttribute = AttributeNamespace + ".GenerateStringOverloadsAttribute";
+    public const string StringIgnoreAttribute = AttributeNamespace + ".StringIgnoreAttribute";
+    public const string FixedSizeArrayAttribute = AttributeNamespace + ".FixedSizeArrayAttribute";
+    public const string BitFieldAttribute = AttributeNamespace + ".BitFieldAttribute`1";
+    public const string InheritsAttribute = AttributeNamespace + ".InheritsAttribute`1";
+
+    public const string CStringPointer = "FFXIVClientStructs.Expansion.Runtime.CStringPointer";
+
+    private const string CExporterAttributeNamespace = "FFXIVClientStructs.Attributes";
+
+    public const string CExporterExcelBeginAttribute = CExporterAttributeNamespace + ".CExporterExcelBeginAttribute";
+    public const string CExporterExcelEndAttribute = CExporterAttributeNamespace + ".CExporterExcelEndAttribute";
+
+    public static HashSet<string> UninheritableAttributes = [MemberFunctionAttribute, VirtualFunctionAttribute, StaticAddressAttribute, GenerateStringOverloadsAttribute, StringIgnoreAttribute, FixedSizeArrayAttribute, BitFieldAttribute, "System.Runtime.InteropServices.FieldOffsetAttribute", CExporterExcelBeginAttribute, CExporterExcelEndAttribute];
+}

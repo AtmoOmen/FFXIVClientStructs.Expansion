@@ -1,0 +1,15 @@
+<Project Sdk="Dalamud.CN.NET.Sdk/15.0.0">
+  <PropertyGroup>
+    <LangVersion>preview</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DisableRuntimeMarshalling>true</DisableRuntimeMarshalling>
+    <Use_DalamudPackager>false</Use_DalamudPackager>
+    <InteropGenerator_InteropNamespace>FFXIVClientStructs.Expansion.Interop.Generated</InteropGenerator_InteropNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <CompilerVisibleProperty Include="InteropGenerator_InteropNamespace" />
+    <ProjectReference Include="../FFXIVClientStructs.Expansion.Generators/FFXIVClientStructs.Expansion.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="../FFXIVClientStructs.Expansion.Runtime/FFXIVClientStructs.Expansion.Runtime.csproj" />
+  </ItemGroup>
+</Project>

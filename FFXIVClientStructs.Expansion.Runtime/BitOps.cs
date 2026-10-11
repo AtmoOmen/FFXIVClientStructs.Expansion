@@ -1,0 +1,44 @@
+using System.Diagnostics.Contracts;
+using System.Numerics;
+using System.Runtime.CompilerServices;
+
+namespace FFXIVClientStructs.Expansion.Runtime;
+
+public static class BitOps {
+   
+   
+   
+   
+    [Pure, MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T CreateLowBitMask<T>(int length)
+        where T : unmanaged, IBinaryInteger<T> {
+        if (length <= 0) return T.Zero;
+        if (length >= Unsafe.SizeOf<T>() * 8) return T.AllBitsSet;
+        return (T.One << length) - T.One;
+    }
+
+    [Pure, MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool GetBit<T>(T value, int index)
+        where T : unmanaged, IBinaryInteger<T> {
+        return ((value >> index) & T.One) != T.Zero;
+    }
+
+    [Pure, MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T SetBit<T>(T value, int index, bool enable)
+        where T : unmanaged, IBinaryInteger<T> {
+        T mask = T.One << index;
+        return enable ? value | mask : value & ~mask;
+    }
+
+    [Pure, MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T GetBits<T>(T value, int shift, T mask)
+        where T : unmanaged, IBinaryInteger<T> {
+        return (value >> shift) & mask;
+    }
+
+    [Pure, MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T SetBits<T>(T value, int shift, T mask, T newValue)
+        where T : unmanaged, IBinaryInteger<T> {
+        return (value & ~(mask << shift)) | ((newValue & mask) << shift);
+    }
+}

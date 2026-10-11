@@ -1,0 +1,21 @@
+using System.Runtime.InteropServices;
+using System.Text;
+
+namespace FFXIVClientStructs.Expansion.Runtime;
+
+[StructLayout(LayoutKind.Explicit, Size = 0x08)]
+public unsafe struct CStringPointer(byte* value) {
+    [FieldOffset(0x00)] public byte* Value = value;
+
+    public readonly bool HasValue => Value != null;
+    public readonly int Length => AsSpan().Length;
+
+    public readonly ReadOnlySpan<byte> AsSpan() => MemoryMarshal.CreateReadOnlySpanFromNullTerminated(Value);
+    public readonly override string ToString() => AsSpan().IsEmpty ? string.Empty : Encoding.UTF8.GetString(AsSpan());
+
+    public static implicit operator byte*(CStringPointer cstr) => cstr.Value;
+    public static implicit operator CStringPointer(byte* cstr) => new(cstr);
+
+    public static explicit operator ReadOnlySpan<byte>(CStringPointer cstr) => cstr.AsSpan();
+    public static explicit operator string(CStringPointer cstr) => cstr.ToString();
+}

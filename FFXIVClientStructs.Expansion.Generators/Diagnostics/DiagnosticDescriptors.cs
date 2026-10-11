@@ -1,0 +1,308 @@
+using Microsoft.CodeAnalysis;
+
+namespace FFXIVClientStructs.Expansion.Generators.Diagnostics;
+
+internal static class DiagnosticDescriptors {
+    public static readonly DiagnosticDescriptor GenerationRequiresPartialStruct = new(
+        "CSIG0001",
+        "Struct generation target is not partial",
+        "The struct {0} must be marked partial in order to support interop generation",
+        "InteropGenerator.Struct",
+        DiagnosticSeverity.Error,
+        true,
+        "A struct was marked with the GenerateInterop attribute but is not partial."
+    );
+
+    public static readonly DiagnosticDescriptor NestedStructMustBeContainedInPartialStruct = new(
+        "CSIG0002",
+        "Struct generation target is contained in a struct that is not partial",
+        "The containing struct {0} must be marked partial in order to support interop generation of {1}",
+        "InteropGenerator.Struct",
+        DiagnosticSeverity.Error,
+        true,
+        "A struct was marked with the GenerateInterop attribute but is contained in a struct that is not marked partial."
+    );
+
+    public static readonly DiagnosticDescriptor NestedStructCannotBeContainedInClass = new(
+        "CSIG0003",
+        "Struct generation target is contained in a class",
+        "The struct {0} cannot be contained in class {1}",
+        "InteropGenerator.Struct",
+        DiagnosticSeverity.Error,
+        true,
+        "A struct was marked with the GenerateInterop attribute but is contained in a class."
+    );
+
+    public static readonly DiagnosticDescriptor GenerationTargetMustUseStructLayoutAttribute = new(
+        "CSIG0004",
+        "Struct generation target must use the StructLayout attribute",
+        "The struct {0} does not have the StructLayout attribute",
+        "InteropGenerator.Struct",
+        DiagnosticSeverity.Error,
+        true,
+        "A struct was marked with the GenerateInterop attribute but is not marked with the StructLayout attribute.");
+
+    public static readonly DiagnosticDescriptor GenerationTargetMustUseLayoutKindExplicit = new(
+        "CSIG0005",
+        "Struct generation target must use LayoutKind.Explicit",
+        "The struct {0} has the StructLayout attribute but does not use LayoutKind.Explicit",
+        "InteropGenerator.Struct",
+        DiagnosticSeverity.Error,
+        true,
+        "A struct was marked with the GenerateInterop attribute but does not use LayoutKind.Explicit.");
+
+    public static readonly DiagnosticDescriptor GenerationTargetMustHaveExplicitSize = new(
+        "CSIG0006",
+        "Struct generation target must provide an explicit size",
+        "The struct {0} has the StructLayout attribute but does not provide an explicit size",
+        "InteropGenerator.Struct",
+        DiagnosticSeverity.Error,
+        true,
+        "A struct was marked with the GenerateInterop attribute but does not provide an explicit size.");
+
+    public static readonly DiagnosticDescriptor InheritedStructIsNotMarkedInherited = new(
+        "CSIG0007",
+        "The Inherits attribute targets a struct that is not marked inherited",
+        "Inherits is used on type {0} targeting type {1} but this type is not marked with GenerateInterop's isInheritable parameter",
+        "InteropGenerator.Struct",
+        DiagnosticSeverity.Error,
+        true,
+        "A struct is marked as inheriting a type that is not properly annotated.");
+
+    public static readonly DiagnosticDescriptor GenerationRequiresPartialMethod = new(
+        "CSIG0101",
+        "Method generation target is not partial",
+        "The method {0} must be marked partial in order to support interop generation",
+        "InteropGenerator.Method",
+        DiagnosticSeverity.Error,
+        true,
+        "A method was marked with a generation attribute but is not partial."
+    );
+
+    public static readonly DiagnosticDescriptor MethodParameterMustBeUnmanaged = new(
+        "CSIG0102",
+        "Method generation target has parameter types that are not unmanaged",
+        "The parameter {0} of method {1} is type {2}, which is not an unmanaged type",
+        "InteropGenerator.Method",
+        DiagnosticSeverity.Error,
+        true,
+        "A method marked for generation contains a parameter that is of an invalid type."
+    );
+
+    public static readonly DiagnosticDescriptor MethodReturnMustBeUnmanaged = new(
+        "CSIG0103",
+        "Method generation target has a return value that is not unmanaged",
+        "The return value of method {0} is type {1}, which is not an unmanaged type",
+        "InteropGenerator.Method",
+        DiagnosticSeverity.Error,
+        true,
+        "A method marked for generation contains a return value that is of an invalid type."
+    );
+
+    public static readonly DiagnosticDescriptor StaticAddressMethodMustNotHaveParameters = new(
+        "CSIG0104",
+        "Static address method generation target is not allowed to have parameters",
+        "Method {0} has parameters, which is not allowed for a static address method stub",
+        "InteropGenerator.Method",
+        DiagnosticSeverity.Error,
+        true,
+        "A method marked for static address generation is not allowed to have parameters."
+    );
+
+    public static readonly DiagnosticDescriptor StaticAddressMethodMustBeStatic = new(
+        "CSIG0105",
+        "Static address method generation target must be static",
+        "Method {0} must be static",
+        "InteropGenerator.Method",
+        DiagnosticSeverity.Error,
+        true,
+        "A method marked for static address generation must be static."
+    );
+
+    public static readonly DiagnosticDescriptor StaticAddressMethodReturnMustBePointer = new(
+        "CSIG0106",
+        "Static address method generation target has a return value that is not a pointer",
+        "The return value of method {0} is type {1}, which is not a pointer type",
+        "InteropGenerator.Method",
+        DiagnosticSeverity.Error,
+        true,
+        "A method marked for static address generation contains a return value that is of an invalid type."
+    );
+
+    public static readonly DiagnosticDescriptor VirtualFunctionMethodMustNotBeStatic = new(
+        "CSIG0107",
+        "Virtual function method generation target must be not static",
+        "Method {0} must be not static",
+        "InteropGenerator.Method",
+        DiagnosticSeverity.Error,
+        true,
+        "A method marked for virtual function generation must not be static."
+    );
+
+    public static readonly DiagnosticDescriptor GenerateStringOverloadsMethodMustHaveValidParameter = new(
+        "CSIG0108",
+        "GenerateStringOverloads method generation target must have a valid CStringPointer parameter to overload",
+        "Method {0} must contain a valid string overload parameter (CStringPointer)",
+        "InteropGenerator.Method",
+        DiagnosticSeverity.Error,
+        true,
+        "A method marked for string overload generation contains no valid target parameters."
+    );
+
+    public static readonly DiagnosticDescriptor StringIgnoreMustTargetValidParameter = new(
+        "CSIG0109",
+        "The StringIgnore attribute is used on an invalid parameter",
+        "StringIgnore is used on parameter {0} of type {1}, which is not a valid byte* parameter",
+        "InteropGenerator.Method",
+        DiagnosticSeverity.Error,
+        true,
+        "A method marked for string overload generation has a StringIgnore attribute on an invalid target parameter."
+    );
+
+    public static readonly DiagnosticDescriptor VirtualFunctionIndexOutOfBounds = new(
+        "CSIG0110",
+        "The VirtualFunction attribute index is out of the bounds defined by the VirtualTable attribute",
+        "The VirtualFunction attribute on method {0} has index {1}, which is out of the bounds of {2} defined by the VirtualTable attribute",
+        "InteropGenerator.Method",
+        DiagnosticSeverity.Error,
+        true,
+        "A method marked for virtual function generation has an out of bounds index."
+    );
+
+    public static readonly DiagnosticDescriptor SignatureContainsInvalidCharacters = new(
+        "CSIG0201",
+        "Signature contains invalid characters",
+        "Signature {0} contains invalid characters (valid characters are A-F, 0-9, ?, and spaces)",
+        "InteropGenerator.Signature",
+        DiagnosticSeverity.Error,
+        true,
+        "A signature contains invalid characters (valid characters are A-F, 0-9, ?, and spaces)."
+    );
+
+    public static readonly DiagnosticDescriptor SignatureFormatInvalid = new(
+        "CSIG0202",
+        "Signature format is invalid",
+        "Signature {0} format is invalid (valid format is 2-character bytes seperated by spaces with ? as the wildcard character with no leading or trailing spaces)",
+        "InteropGenerator.Signature",
+        DiagnosticSeverity.Error,
+        true,
+        "A signature format is invalid (valid format is 2-character bytes seperated by spaces with ? as the wildcard character with no leading or trailign spaces)."
+    );
+
+    public static readonly DiagnosticDescriptor FixedSizeArrayFieldMustBeInternal = new(
+        "CSIG0301",
+        "Fixed size array backing field must be internal",
+        "The field {0} marked as a fixed size array must be internal",
+        "InteropGenerator.Field",
+        DiagnosticSeverity.Error,
+        true,
+        "A field marked with the FixedSizeArray attribute is not marked internal.");
+
+    public static readonly DiagnosticDescriptor FixedSizeArrayFieldMustHaveProperlyNamedType = new(
+        "CSIG0302",
+        "Fixed size array backing field must have a valid type",
+        "The field {0} marked as a fixed size array has type name {1} but the type name must be FixedSizeArray#<T>, where # is the size of the array and T is the type",
+        "InteropGenerator.Field",
+        DiagnosticSeverity.Error,
+        true,
+        "A field marked with the FixedSizeArray attribute has an invalid type format. The type format should be FixedSizeArray#<T>, where # is the size of the array and T is the type.");
+
+    public static readonly DiagnosticDescriptor FixedSizeArrayFieldMustHaveProperNaming = new(
+        "CSIG0303",
+        "Fixed size array backing field must have proper naming",
+        "The field {0} marked as a fixed size array must have a name starting with a _",
+        "InteropGenerator.Field",
+        DiagnosticSeverity.Error,
+        true,
+        "A field marked with the FixedSizeArray attribute does not use the proper naming scheme.");
+
+    public static readonly DiagnosticDescriptor FixedSizeArrayStringFieldMustBeByteOrChar = new(
+        "CSIG0304",
+        "Fixed size array string backing field must be byte or char type",
+        "The field {0} marked as a fixed size array string must use byte or char type",
+        "InteropGenerator.Field",
+        DiagnosticSeverity.Error,
+        true,
+        "A field marked with the FixedSizeArray attribute and isString set to true does not use the proper type.");
+
+    public static readonly DiagnosticDescriptor FixedSizeArrayBitArrayFieldMustBeByte = new(
+        "CSIG0305",
+        "Fixed size bit array backing field must be byte type",
+        "The field {0} marked as a fixed size bit array must use byte type",
+        "InteropGenerator.Field",
+        DiagnosticSeverity.Error,
+        true,
+        "A field marked with the FixedSizeArray attribute and isBitArray set to true does not use the proper type.");
+
+    public static readonly DiagnosticDescriptor FixedSizeArrayBitArrayFieldBitCountMustMatchSize = new(
+        "CSIG0306",
+        "Fixed size bit array backing field must have a size that fits the bit count",
+        "The field {0} marked as a fixed size bit array must have a size that fits the bit count",
+        "InteropGenerator.Field",
+        DiagnosticSeverity.Error,
+        true,
+        "A field marked with the FixedSizeArray attribute and isBitArray set to true has a size that doesn't match the given bitCount. The size must be calculated as (bitCount + 7) / 8.");
+
+    public static readonly DiagnosticDescriptor FixedSizeArrayFieldCannotBeStringAndBitArray = new(
+        "CSIG0307",
+        "Fixed size array cannot be both string and bit array",
+        "The field {0} marked as a fixed size array cannot have both isString and isBitArray set to true",
+        "InteropGenerator.Field",
+        DiagnosticSeverity.Error,
+        true,
+        "A field marked with the FixedSizeArray attribute cannot set both isString and isBitArray to true.");
+
+    public static readonly DiagnosticDescriptor BitFieldIndexIsNegative = new(
+        "CSIG0401",
+        "Bit Field index must be non-negative",
+        "The bit field '{0}' has an index that is negative",
+        "InteropGenerator.Field",
+        DiagnosticSeverity.Error,
+        true,
+        "Bit field indices are zero-based and must be greater than or equal to zero.");
+
+    public static readonly DiagnosticDescriptor BitFieldLengthIsNegativeOrZero = new(
+        "CSIG0402",
+        "Bit Field length must be greater than zero",
+        "The bit field '{0}' on field '{1}' has a length that is less than or equal to zero",
+        "InteropGenerator.Field",
+        DiagnosticSeverity.Error,
+        true,
+        "Bit field lengths must specify at least one bit.");
+
+    public static readonly DiagnosticDescriptor BitFieldExceedsUnderlyingFieldSize = new(
+        "CSIG0403",
+        "Bit Field exceeds underlying type size",
+        "The bit field '{0}' on field '{1}' exceeds the size of the type",
+        "InteropGenerator.Field",
+        DiagnosticSeverity.Error,
+        true,
+        "The sum of the index and bit length exceeds the size of the underlying field.");
+
+    public static readonly DiagnosticDescriptor BitFieldPropertyDefinitionMissingGetter = new(
+        "CSIG0404",
+        "Bit Field property definition is missing a getter",
+        "The property definition for bit field '{0}' on field '{1}' is missing a getter",
+        "InteropGenerator.Property",
+        DiagnosticSeverity.Error,
+        true,
+        "The property definition for a bit field is required to have a getter.");
+
+    public static readonly DiagnosticDescriptor BitFieldBackingFieldTypeNotSupported = new(
+        "CSIG0405",
+        "Bit Field backing field type not supported",
+        "The backing field '{0}' needs to be of type byte, ushort, uint or ulong",
+        "InteropGenerator.Field",
+        DiagnosticSeverity.Error,
+        true,
+        "The backing field for a bit field is required to be either byte, ushort, uint or ulong.");
+
+    public static readonly DiagnosticDescriptor BitFieldBooleanLengthInvalid = new(
+        "CSIG0406",
+        "Bit Field length is invalid for bool",
+        "The bit field '{0}' on field '{1}' is declared as bool but its length is not 1",
+        "InteropGenerator.Field",
+        DiagnosticSeverity.Error,
+        true,
+        "A bit field of type bool is required to have a length of 1 bit.");
+}

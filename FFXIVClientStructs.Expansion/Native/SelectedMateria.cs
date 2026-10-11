@@ -1,0 +1,24 @@
+using System.Collections;
+using System.Runtime.InteropServices;
+using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Component.GUI;
+
+namespace FFXIVClientStructs.Expansion.Native;
+
+[StructLayout(LayoutKind.Explicit, Size = 0x10)]
+public partial struct SelectedMateria
+{
+    [FieldOffset(0)]
+    public InventoryType Type;
+
+    [FieldOffset(4)]
+    public ushort Slot;
+
+    [FieldOffset(8)]
+    public uint ItemID;
+
+    [FieldOffset(12)]
+    public uint SelectCount;
+}
+
