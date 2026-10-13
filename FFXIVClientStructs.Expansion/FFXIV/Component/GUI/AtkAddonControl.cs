@@ -1,27 +1,15 @@
+using NativeAtkAddonControl = FFXIVClientStructs.FFXIV.Component.GUI.AtkAddonControl;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using FFXIVClientStructs.Interop;
-using FFXIVClientStructs.STD;
-using CStringPointer = FFXIVClientStructs.Expansion.Runtime.CStringPointer;
+using CStringPointer = InteropGenerator.Runtime.CStringPointer;
 using FFXIVClientStructs.FFXIV.Client.System.Memory;
 
 namespace FFXIVClientStructs.Expansion.FFXIV.Component.GUI;
 
 [GenerateInterop]
-[Inherits<AtkEventTarget>, Inherits<AtkEventListener>(8)]
+[Inherits<NativeAtkAddonControl>]
 [StructLayout(LayoutKind.Explicit, Size = 0x60)]
 public unsafe partial struct AtkAddonControl : ICreatable<AtkAddonControl>
 {
-    [FieldOffset(0x10)]
-    public StdList<Pointer<ChildAddonInfo>> ChildAddons;
-    [FieldOffset(0x20)]
-    public AtkEventManager EventManager;
-    [FieldOffset(0x28)]
-    public AtkUnitBase* ParentAddon;
-    [FieldOffset(0x30)]
-    public AtkStage* AtkStage;
-    [FieldOffset(0x38)]
-    public AtkCollisionNode* WindowHeaderCollisionNode;
-
     [FieldOffset(0x40)]
     public int SelectedChildIndex;
 
@@ -185,15 +173,6 @@ public unsafe partial struct AtkAddonControl : ICreatable<AtkAddonControl>
         bool   includeDetached = false
     );
 
-    [MemberFunction("E8 ?? ?? ?? ?? 45 33 C0 4C 89 64 24 ?? 4C 8B CE 48 8D 8E")]
-    public partial AtkEvent* RegisterEvent
-    (
-        AtkEventType      eventType,
-        uint              eventParam,
-        AtkEventListener* listener,
-        AtkResNode*       nodeParam
-    );
-
     [MemberFunction
     (
         "48 83 EC ?? 48 83 C1 ?? C6 44 24 ?? ?? E8 ?? ?? ?? ?? 48 83 C4 ?? C3 CC CC CC CC CC CC CC CC CC 48 8B 41 ?? 48 85 C0 74 ?? 0F B7 D2 0F 1F 40 ?? 0F B6 48 ?? 3B CA 74 ?? 48 8B 40 ?? 48 85 C0 75 ?? 32 C0 C3 B0 ?? C3 CC CC CC CC CC CC CC CC CC 48 83 EC"
@@ -257,7 +236,6 @@ public unsafe partial struct AtkAddonControl : ICreatable<AtkAddonControl>
         private CStringPointer unk0;
         [FieldOffset(0x08)]
         public AtkUnitBase* AtkUnitBase;
-
         [FieldOffset(0x10)]
         public AtkResNode* DragHandle;
 
@@ -289,7 +267,6 @@ public unsafe partial struct AtkAddonControl : ICreatable<AtkAddonControl>
         [BitField<bool>(nameof(InitiallyAttached),   6)]
         [FieldOffset(0x40)]
         public byte Flags1;
-
         [BitField<bool>(nameof(IsActive),                  1)]
         [BitField<bool>(nameof(HideWindowAndFocusOnSetup), 2)]
         [FieldOffset(0x41)]

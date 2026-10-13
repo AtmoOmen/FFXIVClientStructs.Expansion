@@ -1,8 +1,10 @@
+using NativeAgentFreeCompanyProfile = FFXIVClientStructs.FFXIV.Client.UI.Agent.AgentFreeCompanyProfile;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 
 namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Agent;
 
 [GenerateInterop]
+[Inherits<NativeAgentFreeCompanyProfile>]
 [Agent(AgentId.FreeCompanyProfile)]
 [StructLayout(LayoutKind.Explicit, Size = 0x280)]
 public unsafe partial struct AgentFreeCompanyProfile

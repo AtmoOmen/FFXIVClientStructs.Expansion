@@ -1,14 +1,10 @@
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using FFXIVClientStructs.FFXIV.Client.Graphics.Scene;
-using FFXIVClientStructs.FFXIV.Client.LayoutEngine;
+using NativeWarpInfo = FFXIVClientStructs.FFXIV.Client.Game.UI.WarpInfo;
 using FFXIVClientStructs.FFXIV.Client.LayoutEngine.Layer;
-using FFXIVClientStructs.FFXIV.Common.Component.BGCollision;
-using FFXIVClientStructs.FFXIV.Common.Math;
-using FFXIVClientStructs.Interop;
 
 namespace FFXIVClientStructs.Expansion.FFXIV.Client.Game.UI;
 
 [GenerateInterop]
+[Inherits<NativeWarpInfo>]
 [StructLayout(LayoutKind.Explicit, Size = 0xE8)]
 public unsafe partial struct WarpInfo
 {
@@ -17,168 +13,7 @@ public unsafe partial struct WarpInfo
 
     [FieldOffset(0x00)]
     public uint State;
-    
-    [FieldOffset(0x04)]
-    public float ElapsedTimeSinceLastWarp;
-    
-    [FieldOffset(0x08)]
-    private float Unk8;
-    
-    [FieldOffset(0x0C)]
-    public WarpType WarpType;
-    
+
     [FieldOffset(0x10)]
     public ExitRangeLayoutInstance* ExitRange;
-    
-    [FieldOffset(0x18)]
-    private int Unk18;
-    
-    [FieldOffset(0x1C)]
-    private int Unk1C;
-    
-    [FieldOffset(0x20)]
-    public Vector3 ZoneLineLastHit;
-    
-    [FieldOffset(0x30)]
-    public Vector3 WarpPos;
-    
-    [FieldOffset(0x40)]
-    private byte Unk40;
-    
-    [FieldOffset(0x41)]
-    private byte Unk41;
-    
-    [FieldOffset(0x42)]
-    private byte Unk42;
-    
-    [FieldOffset(0x43)]
-    private byte Unk43;
-    
-    [FieldOffset(0x44)]
-    private int Unk44;
-    
-    [FieldOffset(0x48)]
-    private byte Unk48;
-    
-    [FieldOffset(0x4C)]
-    private uint PopRangeId;
-    
-    [FieldOffset(0x50)]
-    private byte Unk50;
-    
-    [FieldOffset(0x51)]
-    private byte Unk51;
-    
-    [FieldOffset(0x52)]
-    private byte Unk52;
-    
-    [FieldOffset(0x53)]
-    private byte Unk53;
-    
-    [FieldOffset(0x54)]
-    private byte Unk54;
-    
-    [FieldOffset(0x55)]
-    private byte Unk55;
-    
-    [FieldOffset(0x56)]
-    private byte Unk56;
-    
-    [FieldOffset(0x57)]
-    private byte Unk57;
-    
-    [FieldOffset(0x58)]
-    private int Unk58;
-    
-    [FieldOffset(0x5C)]
-    private byte Unk5C;
-    
-    [FieldOffset(0x5D)]
-    private byte Unk5D;
-    
-    [FieldOffset(0x5E)]
-    private byte Unk5E;
-    
-    [FieldOffset(0x5F)]
-    private byte Unk5F;
-    
-    [FieldOffset(0x60)]
-    private float Unk60;
-    
-    [FieldOffset(0x68)]
-    public Collider* PrefetchCollider;
-    
-    [FieldOffset(0x70)]
-    public PrefetchRangeLayoutInstance* PrefetchRange;
-    
-    [FieldOffset(0x78)]
-    public uint PrefetchRangeBoundInstanceId;
-    
-    [FieldOffset(0x7C)]
-    public short PrefetchRangePriority;
-    
-    [FieldOffset(0x80)]
-    public uint PrefetchExitRangeId;
-    
-    [FieldOffset(0x88)]
-    public ExitRangeLayoutInstance* PrefetchExitRange;
-    
-    [FieldOffset(0x90)]
-    public Vector3 PrefetchExitRangePos;
-    
-    [FieldOffset(0xA0)]
-    public ushort PrefetchExitRangeTerritoryType;
-    
-    [FieldOffset(0xA4)]
-    public int PrefetchExitRangeDestInstanceId;
-    
-    [FieldOffset(0xA8)]
-    private int UnkA8;
-    
-    [FieldOffset(0xB0)]
-    public byte* TerritoryTypeBg;
-    
-    [FieldOffset(0xB8)]
-    public InstanceType InstanceType;
-    
-    [FieldOffset(0xBC)]
-    public uint DestInstanceId;
-    
-    [FieldOffset(0xC0)]
-    public uint TerritoryTypeId;
-    
-    [FieldOffset(0xC4)]
-    private byte UnkC4;
-    
-    [FieldOffset(0xC5)]
-    private byte UnkC5;
-    
-    [FieldOffset(0xC6)]
-    private byte UnkC6;
-    
-    [FieldOffset(0xC7)]
-    private byte UnkC7;
-    
-    [FieldOffset(0xC8)]
-    private DrawObject* LocalPlayerDrawObject;
-
-    /// <summary>
-    ///     Finishes the current warp/loading screen after the ready check in Update succeeds. Clears loading, shows ui.
-    /// </summary>
-    /// <param name="eventParam">
-    ///     Param for when when invoked from event handlers. 0 if not.
-    /// </param>
-    /// <param name="eventId">
-    ///     Event id when invoked from EventFramework. 0 if not.
-    /// </param>
-    /// <remarks>
-    ///     Runs various post-login events like near achievements, play guide, returner dialog.<br />
-    ///     This is a good post-login event if you check <see cref="WarpType" />
-    /// </remarks>
-    [MemberFunction("E8 ?? ?? ?? ?? 66 0F 1F 44 00 ?? 48 C7 87 ?? ?? ?? ?? ?? ?? ?? ??")]
-    public partial void CompleteWarp
-    (
-        int eventParam,
-        int eventId
-    );
 }

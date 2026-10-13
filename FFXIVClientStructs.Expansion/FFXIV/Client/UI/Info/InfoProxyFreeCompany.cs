@@ -1,18 +1,26 @@
+using NativeInfoProxyFreeCompany = FFXIVClientStructs.FFXIV.Client.UI.Info.InfoProxyFreeCompany;
 using System.Text;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
 
 namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Info;
 
 [GenerateInterop]
+[Inherits<NativeInfoProxyFreeCompany>]
 [InfoProxy(InfoProxyId.FreeCompany)]
 [StructLayout(LayoutKind.Explicit, Size = 0x6E8)]
 public unsafe partial struct InfoProxyFreeCompany
 {
-    [FieldOffset(122)]
-    public ushort TotalMembers;
-
     [FieldOffset(320), FixedSizeArray]
     internal FixedSizeArray16<RankData> RanksStorage;
+
+    [MemberFunction("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 48 89 7C 24 ?? 41 56 48 83 EC ?? 48 8B BC 24 ?? ?? ?? ?? 45 0F B7 F1")]
+    public partial bool RequestInvitePlayer
+    (
+        ulong          accountID,
+        ulong          contentID,
+        ushort         worldID,
+        CStringPointer name
+    );
 
     public RankData* GetRankData
     (
@@ -45,7 +53,7 @@ public unsafe partial struct InfoProxyFreeCompany
         if (rank == null) return string.Empty;
 
         var name = GetRankName(rank);
-        return name == null ?
+        return name.Value == null ?
                    string.Empty :
                    Encoding.UTF8.GetString(MemoryMarshal.CreateReadOnlySpanFromNullTerminated(name));
     }
@@ -79,10 +87,8 @@ public unsafe partial struct InfoProxyFreeCompany
     {
         [FieldOffset(32)]
         public ushort MemberCount;
-
         [FieldOffset(34)]
         public byte RankNumber;
-
         [FieldOffset(35), FixedSizeArray(isString: true)]
         internal FixedSizeArray16<byte> NameStorage;
     }
@@ -94,7 +100,7 @@ public unsafe partial struct InfoProxyFreeCompany
     #endregion
 
     [MemberFunction("48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 85 D2 75")]
-    private partial byte* GetRankName
+    private partial CStringPointer GetRankName
     (
         RankData* rank
     );

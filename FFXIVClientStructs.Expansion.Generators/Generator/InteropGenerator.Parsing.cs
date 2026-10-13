@@ -24,6 +24,8 @@ public sealed partial class InteropGenerator {
         token.ThrowIfCancellationRequested();
         ParseFields(structSymbol, token, isInherited, out EquatableArray<FixedSizeArrayInfo> fixedSizeArrays, out EquatableArray<BitFieldInfo> bitFields, out EquatableArray<FieldInfo> publicFields);
         token.ThrowIfCancellationRequested();
+        ParseOwnMembers(structSymbol, fixedSizeArrays, token, out EquatableArray<OwnMemberInfo> ownMembers);
+        token.ThrowIfCancellationRequested();
         SignatureInfo? virtualTableSignatureInfo = null;
         uint? virtualTableFunctionCount = null;
         if (structSymbol.TryGetAttributeWithFullyQualifiedMetadataName(InteropTypeNames.VirtualTableAttribute, out AttributeData? virtualTableAttribute)) {
@@ -89,6 +91,8 @@ public sealed partial class InteropGenerator {
             bitFields,
             inheritanceInfoBuilder.ToImmutable(),
             structSize,
+            ownMembers,
+            false,
             extraInheritedStructInfo);
     }
 
@@ -395,6 +399,57 @@ public sealed partial class InteropGenerator {
 
         publicProperties = publicPropertiesBuilder.ToImmutable();
     }
+
+    private static void ParseOwnMembers(INamedTypeSymbol structSymbol, EquatableArray<FixedSizeArrayInfo> fixedSizeArrays, CancellationToken token, out EquatableArray<OwnMemberInfo> ownMembers) {
+        using ImmutableArrayBuilder<OwnMemberInfo> ownMembersBuilder = new();
+
+        foreach (ISymbol memberSymbol in structSymbol.GetMembers()) {
+            token.ThrowIfCancellationRequested();
+
+            switch (memberSymbol) {
+                case IFieldSymbol fieldSymbol:
+                    if (fieldSymbol.IsStatic ||
+                        !fieldSymbol.TryGetAttributeWithFullyQualifiedMetadataName("System.Runtime.InteropServices.FieldOffsetAttribute", out AttributeData? fieldOffsetAttributeData) ||
+                        !fieldOffsetAttributeData.TryGetConstructorArgument(0, out int fieldOffset))
+                        continue;
+
+                    ownMembersBuilder.Add(new OwnMemberInfo(fieldSymbol.Name, fieldSymbol.Type.GetNameWithContainingTypeAndNamespace(), fieldOffset, false, string.Empty));
+
+                    break;
+                case IMethodSymbol methodSymbol:
+                    if (methodSymbol.MethodKind != MethodKind.Ordinary)
+                        continue;
+
+                    ownMembersBuilder.Add(new OwnMemberInfo(methodSymbol.Name, string.Empty, -1, true, GetMethodSignature(methodSymbol)));
+
+                    break;
+                case IPropertySymbol propertySymbol:
+                    if (propertySymbol.IsIndexer)
+                        continue;
+
+                    ownMembersBuilder.Add(new OwnMemberInfo(propertySymbol.Name, propertySymbol.Type.GetNameWithContainingTypeAndNamespace(), -1, false, string.Empty));
+
+                    break;
+            }
+        }
+
+        if (structSymbol.TryGetAttributeWithFullyQualifiedMetadataName("FFXIVClientStructs.Attributes.AgentAttribute", out _) ||
+            structSymbol.TryGetAttributeWithFullyQualifiedMetadataName("FFXIVClientStructs.Attributes.InfoProxyAttribute", out _))
+            ownMembersBuilder.Add(new OwnMemberInfo("Instance", string.Empty, -1, true, string.Empty));
+
+        foreach (FixedSizeArrayInfo fixedSizeArrayInfo in fixedSizeArrays) {
+            string publicFieldName = fixedSizeArrayInfo.GetPublicFieldName();
+
+            ownMembersBuilder.Add(new OwnMemberInfo(publicFieldName, string.Empty, -1, false, string.Empty));
+            ownMembersBuilder.Add(new OwnMemberInfo(publicFieldName + "String", string.Empty, -1, false, string.Empty));
+            ownMembersBuilder.Add(new OwnMemberInfo(publicFieldName + "BitArray", string.Empty, -1, false, string.Empty));
+        }
+
+        ownMembers = ownMembersBuilder.ToImmutable();
+    }
+
+    private static string GetMethodSignature(IMethodSymbol methodSymbol) =>
+        string.Join(", ", methodSymbol.Parameters.Select(parameter => parameter.RefKind.GetStringPrefix() + parameter.Type.GetFullyQualifiedName()));
 
     private static EquatableArray<string> ParseInheritedAttributes(ISymbol symbol, CancellationToken token) {
         ImmutableArrayBuilder<string> inheritedAttributes = new();

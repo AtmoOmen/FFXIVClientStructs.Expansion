@@ -17,6 +17,8 @@ internal sealed record StructInfo
     EquatableArray<BitFieldInfo>        BitFields,
     EquatableArray<InheritanceInfo>     InheritedStructs,
     int?                                Size,
+    EquatableArray<OwnMemberInfo>       OwnMembers,
+    bool                                IsExternal,
     ExtraInheritedStructInfo?           ExtraInheritedStructInfo
 )
 {

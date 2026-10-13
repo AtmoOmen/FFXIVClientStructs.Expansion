@@ -35,7 +35,7 @@ public sealed class InstanceGenerator : IIncrementalGenerator
             {
                 var symbol = (INamedTypeSymbol)attributeContext.TargetSymbol;
                 var id     = (uint)attributeContext.Attributes[0].ConstructorArguments[0].Value!;
-                return (Namespace: symbol.ContainingNamespace.ToDisplayString(), Name: symbol.Name, Id: id);
+                return (Namespace: symbol.ContainingNamespace.ToDisplayString(), symbol.Name, Id: id);
             }
         );
 
@@ -44,16 +44,19 @@ public sealed class InstanceGenerator : IIncrementalGenerator
             targets,
             (sourceContext, target) =>
             {
-                var source = $@"using FFXIVClientStructs.FFXIV.Client.UI.{category};
-namespace {target.Namespace};
-public unsafe partial struct {target.Name}
-{{
-    public static {target.Name}* Instance()
-    {{
-        var module = {module}.Instance();
-        return module == null ? null : ({target.Name}*)module->{getter}(({idType}){target.Id});
-    }}
-}}";
+                var source = $$"""
+                               using FFXIVClientStructs.FFXIV.Client.UI.{{category}};
+                               using NativeModule = FFXIVClientStructs.FFXIV.Client.UI.{{category}}.{{module}};
+                               namespace {{target.Namespace}};
+                               public unsafe partial struct {{target.Name}}
+                               {
+                                   public static {{target.Name}}* Instance()
+                                   {
+                                       var module = NativeModule.Instance();
+                                       return module == null ? null : ({{target.Name}}*)module->{{getter}}(({{idType}}){{target.Id}});
+                                   }
+                               }
+                               """;
                 sourceContext.AddSource($"{target.Namespace}.{target.Name}.Instance.g.cs", SourceText.From(source, Encoding.UTF8));
             }
         );

@@ -1,11 +1,10 @@
-using FFXIVClientStructs.Expansion.Interop.Generated;
-using FFXIVClientStructs.Expansion.Runtime;
-
 namespace FFXIVClientStructs.Expansion;
 
 public static class ExpansionInterop
 {
-    private static readonly object SyncRoot = new();
+    private static readonly Lock SyncRoot = new();
+
+    private static readonly HashSet<Address> OwnedAddresses = [];
 
     public static void Initialize
     (
@@ -16,10 +15,15 @@ public static class ExpansionInterop
         {
             var resolver = Resolver.GetInstance;
             resolver.Setup(moduleCopyPointer);
+
+            HashSet<Address> registered = [.. resolver.Addresses];
+
             Addresses.Register();
+            OwnedAddresses.Clear();
+            OwnedAddresses.UnionWith(resolver.Addresses.Where(address => !registered.Contains(address)));
             resolver.Resolve();
 
-            var unresolved = resolver.Addresses.Where(address => address.Value == 0).Select(address => address.Name).ToArray();
+            var unresolved = OwnedAddresses.Where(address => address.Value == 0).Select(address => address.Name).ToArray();
             if (unresolved.Length != 0)
                 throw new InvalidOperationException($"Unresolved native addresses: {string.Join(", ", unresolved)}");
         }
@@ -29,9 +33,11 @@ public static class ExpansionInterop
     {
         lock (SyncRoot)
         {
-            var resolver = Resolver.GetInstance;
-            foreach (var address in resolver.Addresses)
+            foreach (var address in OwnedAddresses)
                 address.Value = 0;
+
+            OwnedAddresses.Clear();
+
             Addresses.Unregister();
         }
     }

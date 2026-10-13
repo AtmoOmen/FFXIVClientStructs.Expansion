@@ -1,18 +1,20 @@
+using NativeAgentWorldTravel = FFXIVClientStructs.FFXIV.Client.UI.Agent.AgentWorldTravel;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.STD;
-using CStringPointer = FFXIVClientStructs.Expansion.Runtime.CStringPointer;
+using CStringPointer = InteropGenerator.Runtime.CStringPointer;
 
 namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Agent;
 
 [Agent(AgentId.WorldTravel)]
 [GenerateInterop]
-[Inherits<AgentInterface>]
+[Inherits<NativeAgentWorldTravel>]
 [StructLayout(LayoutKind.Explicit, Size = 0x170)]
 public unsafe partial struct AgentWorldTravel
 {
     [FieldOffset(0x30)]
     public uint YesNo2Id;
+
     [FieldOffset(0x34)]
     public uint WorldTravelFinderStatusAddonId;
     [FieldOffset(0x38)]
@@ -25,14 +27,6 @@ public unsafe partial struct AgentWorldTravel
 
     [FieldOffset(0x48)]
     public float WorldListTimer;
-
-    [FieldOffset(0x4C)]
-    public ushort DestinationWorldId;
-
-    [FieldOffset(0x50)]
-    public Utf8String CurrentWorldName;
-    [FieldOffset(0xB8)]
-    public Utf8String DestinationWorldName;
 
     [FieldOffset(0x120)]
     public byte IsWorldTraveling;
@@ -146,13 +140,6 @@ public unsafe partial struct AgentWorldTravel
     (
         int position,
         int estimatedWaitTimeMinute
-    );
-
-    [MemberFunction("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC ?? 48 8B F9 41 0F B7 F0 48 8B 49")]
-    public partial void SetupWorldTravelInfo
-    (
-        ushort currentWorld,
-        ushort targetWorld
     );
 
     [MemberFunction("40 57 44 8B 81")]

@@ -1,21 +1,16 @@
+using NativeAgentFreeCompany = FFXIVClientStructs.FFXIV.Client.UI.Agent.AgentFreeCompany;
 using Dalamud.Game.Text.SeStringHandling;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using FFXIVClientStructs.FFXIV.Client.UI.Info;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Agent;
 
 [GenerateInterop]
+[Inherits<NativeAgentFreeCompany>]
 [Agent(AgentId.FreeCompany)]
 [StructLayout(LayoutKind.Explicit, Size = 0xAD8)]
 public unsafe partial struct AgentFreeCompany
 {
-    [FieldOffset(80)]
-    public InfoProxyFreeCompanyMember* InfoProxyFreeCompanyMember;
-
-    [FieldOffset(94)]
-    public byte CurrentMemberPageIndex;
-
     [FieldOffset(104)]
     public MemberActionType PendingAction;
 

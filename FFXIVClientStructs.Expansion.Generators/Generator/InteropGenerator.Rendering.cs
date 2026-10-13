@@ -100,7 +100,7 @@ public sealed partial class InteropGenerator {
 
         string ulongArrayMask = "new ulong[] {" + string.Join(", ", groupedSigMask) + "}";
 
-        return $"""public static readonly global::FFXIVClientStructs.Expansion.Runtime.Address {signatureName} = new global::FFXIVClientStructs.Expansion.Runtime.Address("{structInfo.FullyQualifiedMetadataName}.{signatureName}", "{paddedSignature}", {offsets}, {ulongArraySignature}, {ulongArrayMask}, 0);""";
+        return $"""public static readonly global::InteropGenerator.Runtime.Address {signatureName} = new global::InteropGenerator.Runtime.Address("{structInfo.FullyQualifiedMetadataName}.{signatureName}", "{paddedSignature}", {offsets}, {ulongArraySignature}, {ulongArrayMask}, 0);""";
     }
 
     private static void RenderVirtualTable(StructInfo structInfo, IndentedTextWriter writer) {
@@ -168,7 +168,7 @@ public sealed partial class InteropGenerator {
             using (writer.WriteBlock()) {
                 writer.WriteLine($"if (MemberFunctionPointers.{mfi.MethodInfo.NameNonGeneric} is null)");
                 using (writer.WriteBlock()) {
-                    writer.WriteLine($"""FFXIVClientStructs.Expansion.Runtime.ThrowHelper.ThrowNullAddress("{structInfo.Name}.{mfi.MethodInfo.Name}", "{mfi.SignatureInfo.Signature}");""");
+                    writer.WriteLine($"""InteropGenerator.Runtime.ThrowHelper.ThrowNullAddress("{structInfo.Name}.{mfi.MethodInfo.Name}", "{mfi.SignatureInfo.Signature}");""");
                 }
                 if (mfi.MethodInfo.IsStatic) {
                     writer.WriteLine($"{mfi.MethodInfo.GetReturnString()}MemberFunctionPointers.{mfi.MethodInfo.NameNonGeneric}({mfi.MethodInfo.GetParameterNamesString()});");
@@ -209,7 +209,7 @@ public sealed partial class InteropGenerator {
             using (writer.WriteBlock()) {
                 writer.WriteLine($"if (StaticAddressPointers.{extraPointerText}p{sai.MethodInfo.Name} is null)");
                 using (writer.WriteBlock()) {
-                    writer.WriteLine($"""FFXIVClientStructs.Expansion.Runtime.ThrowHelper.ThrowNullAddress("{structInfo.Name}.{sai.MethodInfo.Name}", "{sai.SignatureInfo.Signature}");""");
+                    writer.WriteLine($"""InteropGenerator.Runtime.ThrowHelper.ThrowNullAddress("{structInfo.Name}.{sai.MethodInfo.Name}", "{sai.SignatureInfo.Signature}");""");
                 }
                 writer.WriteLine($"return {pointerReturnText}StaticAddressPointers.{extraPointerText}p{sai.MethodInfo.Name};");
             }
@@ -290,7 +290,7 @@ public sealed partial class InteropGenerator {
                         using (writer.WriteBlock()) {
                             writer.WriteLine($"if (global::System.Text.Encoding.UTF8.GetByteCount(value) > {fixedSizeArrayInfo.Size} - 1)");
                             using (writer.WriteBlock()) {
-                                writer.WriteLine($"""FFXIVClientStructs.Expansion.Runtime.ThrowHelper.ThrowStringSizeTooLarge("{fixedSizeArrayInfo.GetPublicFieldName()}String", {fixedSizeArrayInfo.Size});""");
+                                writer.WriteLine($"""InteropGenerator.Runtime.ThrowHelper.ThrowStringSizeTooLarge("{fixedSizeArrayInfo.GetPublicFieldName()}String", {fixedSizeArrayInfo.Size});""");
                             }
                             writer.WriteLine($"global::System.Text.Encoding.UTF8.GetBytes(value.AsSpan(), {fixedSizeArrayInfo.FieldName});");
                             writer.WriteLine($"{fixedSizeArrayInfo.FieldName}[{fixedSizeArrayInfo.Size - 1}] = 0;");
@@ -301,7 +301,7 @@ public sealed partial class InteropGenerator {
                         using (writer.WriteBlock()) {
                             writer.WriteLine($"if (value.Length > {fixedSizeArrayInfo.Size} - 1)");
                             using (writer.WriteBlock()) {
-                                writer.WriteLine($"""FFXIVClientStructs.Expansion.Runtime.ThrowHelper.ThrowStringSizeTooLarge("{fixedSizeArrayInfo.GetPublicFieldName()}String", {fixedSizeArrayInfo.Size});""");
+                                writer.WriteLine($"""InteropGenerator.Runtime.ThrowHelper.ThrowStringSizeTooLarge("{fixedSizeArrayInfo.GetPublicFieldName()}String", {fixedSizeArrayInfo.Size});""");
                             }
                             writer.WriteLine($"value.CopyTo({fixedSizeArrayInfo.FieldName});");
                             writer.WriteLine($"{fixedSizeArrayInfo.FieldName}[{fixedSizeArrayInfo.Size - 1}] = '\\0';");
@@ -363,13 +363,13 @@ public sealed partial class InteropGenerator {
     private static string GetAddToResolverString(StructInfo structInfo, string signatureName) {
         string namespaceString = string.IsNullOrEmpty(structInfo.Namespace) ? string.Empty : structInfo.Namespace + ".";
         var fullTypeName = $"global::{namespaceString}{string.Join(".", structInfo.Hierarchy.Reverse())}";
-        return $"FFXIVClientStructs.Expansion.Runtime.Resolver.GetInstance.RegisterAddress({fullTypeName}.Addresses.{signatureName});";
+        return $"InteropGenerator.Runtime.Resolver.GetInstance.RegisterAddress({fullTypeName}.Addresses.{signatureName});";
     }
 
     private static string GetRemoveFromResolverString(StructInfo structInfo, string signatureName) {
         string namespaceString = string.IsNullOrEmpty(structInfo.Namespace) ? string.Empty : structInfo.Namespace + ".";
         var fullTypeName = $"global::{namespaceString}{string.Join(".", structInfo.Hierarchy.Reverse())}";
-        return $"FFXIVClientStructs.Expansion.Runtime.Resolver.GetInstance.UnregisterAddress({fullTypeName}.Addresses.{signatureName});";
+        return $"InteropGenerator.Runtime.Resolver.GetInstance.UnregisterAddress({fullTypeName}.Addresses.{signatureName});";
     }
 
     private static string RenderFixedArrayTypes(ImmutableArray<StructInfo> structInfos, string generatorNamespace) {

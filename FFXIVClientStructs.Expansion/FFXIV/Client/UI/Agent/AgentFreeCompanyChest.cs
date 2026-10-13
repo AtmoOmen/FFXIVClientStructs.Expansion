@@ -1,9 +1,11 @@
+using NativeAgentFreeCompanyChest = FFXIVClientStructs.FFXIV.Client.UI.Agent.AgentFreeCompanyChest;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 
 namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Agent;
 
 [GenerateInterop]
+[Inherits<NativeAgentFreeCompanyChest>]
 [Agent(AgentId.FreeCompanyChest)]
 [StructLayout(LayoutKind.Explicit, Size = 0x1EF0)]
 public unsafe partial struct AgentFreeCompanyChest

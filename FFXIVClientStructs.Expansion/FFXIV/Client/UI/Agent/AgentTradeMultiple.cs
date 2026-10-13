@@ -1,3 +1,4 @@
+using NativeAgentTradeMultiple = FFXIVClientStructs.FFXIV.Client.UI.Agent.AgentTradeMultiple;
 using System.Diagnostics.CodeAnalysis;
 using System.Collections;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -7,6 +8,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Agent;
 
 [GenerateInterop]
+[Inherits<NativeAgentTradeMultiple>]
 [Agent(AgentId.TradeMultiple)]
 [StructLayout(LayoutKind.Explicit, Size = 176)]
 public unsafe partial struct AgentTradeMultiple : IEnumerable<SelectedMateria>

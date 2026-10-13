@@ -1,7 +1,11 @@
+using NativeCamera = FFXIVClientStructs.FFXIV.Client.Game.Camera;
+
 namespace FFXIVClientStructs.Expansion.FFXIV.Client.Game;
 
 [StructLayout(LayoutKind.Explicit, Size = 0x2C0)]
-public struct CameraExtra
+[GenerateInterop]
+[Inherits<NativeCamera>]
+public partial struct CameraExtra
 {
     [FieldOffset(320)]
     public float DirH;

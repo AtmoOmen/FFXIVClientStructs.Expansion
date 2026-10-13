@@ -1,7 +1,7 @@
 namespace FFXIVClientStructs.Expansion.Generators;
 
 public static class InteropTypeNames {
-    private const string AttributeNamespace = "FFXIVClientStructs.Expansion.Runtime.Attributes";
+    private const string AttributeNamespace = "InteropGenerator.Runtime.Attributes";
 
     public const string GenerateInteropAttribute = AttributeNamespace + ".GenerateInteropAttribute";
     public const string MemberFunctionAttribute = AttributeNamespace + ".MemberFunctionAttribute";
@@ -14,7 +14,7 @@ public static class InteropTypeNames {
     public const string BitFieldAttribute = AttributeNamespace + ".BitFieldAttribute`1";
     public const string InheritsAttribute = AttributeNamespace + ".InheritsAttribute`1";
 
-    public const string CStringPointer = "FFXIVClientStructs.Expansion.Runtime.CStringPointer";
+    public const string CStringPointer = "InteropGenerator.Runtime.CStringPointer";
 
     private const string CExporterAttributeNamespace = "FFXIVClientStructs.Attributes";
 

@@ -1,0 +1,23 @@
+using FFXIVClientStructs.STD;
+
+namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Misc;
+
+[GenerateInterop]
+[StructLayout(LayoutKind.Explicit, Size = 14552)]
+public unsafe partial struct UIDataModule
+{
+    [FieldOffset(4504)]
+    public StdVector<BlacklistLocalEntry> BlacklistEntries;
+
+    [MemberFunction("48 8B 81 ?? ?? ?? ?? 4C 8B 81 ?? ?? ?? ?? 49 3B C0 74 ?? 0F B7 08")]
+    public partial BlacklistLocalEntry* GetBlacklistEntryByKey
+    (
+        ushort entryKey
+    );
+
+    [MemberFunction("48 8B 81 ?? ?? ?? ?? 4C 8B 81 ?? ?? ?? ?? 49 3B C0 74 ?? 66 83 38")]
+    public partial BlacklistLocalEntry* GetBlacklistEntryByContentID
+    (
+        ulong contentID
+    );
+}

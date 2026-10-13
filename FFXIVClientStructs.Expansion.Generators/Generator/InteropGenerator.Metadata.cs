@@ -127,6 +127,8 @@ public sealed partial class InteropGenerator
             ImmutableArray<BitFieldInfo>.Empty,
             ImmutableArray<InheritanceInfo>.Empty,
             definition.GetLayout().Size,
+            ImmutableArray<OwnMemberInfo>.Empty,
+            true,
             new ExtraInheritedStructInfo(fields.ToImmutable(), methods.ToImmutable(), properties.ToImmutable())
         );
     }
