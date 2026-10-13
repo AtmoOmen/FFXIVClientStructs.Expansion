@@ -161,13 +161,19 @@ public unsafe partial struct AgentWorldTravel
     public struct World
     {
         [FieldOffset(0x00)]
-        public ushort WorldId;
+        public ushort WorldID;
+        
+        /// <summary>
+        /// 1 = LogMessageId is 0 <br/>
+        /// 2 = home world <br/>
+        /// 4 = current world <br/>
+        /// </summary>
         [FieldOffset(0x02)]
         public ushort Flags;
         [FieldOffset(0x04)]
         public byte DataCenterId;
         [FieldOffset(0x08)]
-        public uint LogMessageId;
+        public uint LogMessageID;
     }
 
     [StructLayout(LayoutKind.Explicit, Size = 0x70)]
