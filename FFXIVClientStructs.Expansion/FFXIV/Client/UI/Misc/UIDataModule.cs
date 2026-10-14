@@ -1,9 +1,12 @@
+using FFXIVClientStructs.FFXIV.Client.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.STD;
 
 namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Misc;
 
 [GenerateInterop]
 [StructLayout(LayoutKind.Explicit, Size = 14552)]
+[Inherits<UiDataModule>]
 public unsafe partial struct UIDataModule
 {
     [FieldOffset(4504)]
@@ -20,4 +23,12 @@ public unsafe partial struct UIDataModule
     (
         ulong contentID
     );
+
+    public static unsafe UIDataModule* Instance()
+    {
+        var uiModulePtr = UIModule.Instance();
+        return (nint)uiModulePtr != nint.Zero ?
+                   (UIDataModule*)uiModulePtr->GetUiDataModule() :
+                   null;
+    }
 }

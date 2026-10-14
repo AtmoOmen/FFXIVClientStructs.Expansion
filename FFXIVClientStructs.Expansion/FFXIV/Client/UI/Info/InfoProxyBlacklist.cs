@@ -1,5 +1,6 @@
 using NativeBlacklist = FFXIVClientStructs.FFXIV.Client.UI.Info.InfoProxyBlacklist;
 using FFXIVClientStructs.FFXIV.Client.UI.Info;
+using FFXIVClientStructs.Expansion.FFXIV.Client.UI.Misc;
 
 namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Info;
 
@@ -22,6 +23,37 @@ public unsafe partial struct InfoProxyBlacklist
     public byte OperationFlags;
 
     public bool IsBusy => IsRefreshing || IsRequestPending;
+
+    public static BlacklistLocalEntry* GetLocalEntry
+    (
+        BlacklistCharacter* character
+    )
+    {
+        var uiDataModule = UIDataModule.Instance();
+
+        if (character->EntryKey != 0)
+            return uiDataModule->GetBlacklistEntryByKey(character->EntryKey);
+
+        return character->IsAccount ?
+                   null :
+                   uiDataModule->GetBlacklistEntryByContentID(character->ID);
+    }
+
+    public ushort GetHomeWorldID
+    (
+        uint index
+    )
+    {
+        fixed (InfoProxyBlacklist* instance = &this)
+        {
+            var localEntry = GetLocalEntry(&instance->CharactersStorage[(int)index]);
+
+            if (localEntry == null)
+                return 0;
+
+            return localEntry->HomeWorldID;
+        }
+    }
 
     [MemberFunction("40 53 41 54 41 55 41 56 41 57 48 83 EC ?? 4C 8B E1")]
     public partial nint UpdateEntryDisplay
