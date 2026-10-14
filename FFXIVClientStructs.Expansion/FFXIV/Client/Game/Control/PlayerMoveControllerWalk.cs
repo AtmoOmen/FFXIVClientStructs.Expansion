@@ -34,7 +34,7 @@ public unsafe partial struct PlayerMoveControllerWalk
     public bool IsCameraRelativeMode;
 
     [FieldOffset(63)]
-    public bool UnknownFlag63;
+    public bool IsCameraOrientationActive;
 
     [FieldOffset(64)]
     public bool IsJumping;
