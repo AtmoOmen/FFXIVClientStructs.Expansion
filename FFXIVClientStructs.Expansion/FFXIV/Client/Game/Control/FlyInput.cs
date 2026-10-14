@@ -13,14 +13,14 @@ public struct FlyInput
     public float Up;
 
     [FieldOffset(12)]
-    public float Unknown12;
+    public float Turn;
 
     [FieldOffset(16)]
-    public uint Unknown16;
+    public float Rotation;
 
     [FieldOffset(20)]
-    public byte Unknown20;
+    public byte DirectionReference;
 
     [FieldOffset(21)]
-    public bool UnknownFlag21;
+    public bool HasMovementInput;
 }
