@@ -12,6 +12,15 @@ public unsafe partial struct PlayerMoveControllerWalk
     [FieldOffset(32)]
     public PlayerController* Parent;
 
+    [FieldOffset(40)]
+    private int Unknown40;
+
+    [FieldOffset(48)]
+    private float Unknown48;
+
+    [FieldOffset(52)]
+    private float Unknown52;
+
     [FieldOffset(56)]
     public float SpeedMultiplier;
 
@@ -25,7 +34,7 @@ public unsafe partial struct PlayerMoveControllerWalk
     public bool IsCameraRelativeMode;
 
     [FieldOffset(63)]
-    private bool UnknownFlag63;
+    public bool UnknownFlag63;
 
     [FieldOffset(64)]
     public bool IsJumping;
@@ -33,8 +42,29 @@ public unsafe partial struct PlayerMoveControllerWalk
     [FieldOffset(68)]
     public float CurrentSpeed;
 
+    [FieldOffset(80)]
+    private void* Unknown80;
+
     [FieldOffset(88)]
     public float BaseMovementSpeed;
+
+    [FieldOffset(96)]
+    private nint Unknown96;
+
+    [FieldOffset(104)]
+    private nint Unknown104;
+
+    [FieldOffset(112)]
+    private nint Unknown112;
+
+    [FieldOffset(120)]
+    private nint Unknown120;
+
+    [FieldOffset(128)]
+    private nint Unknown128;
+
+    [FieldOffset(132)]
+    private bool UnknownFlag132;
 
     [FieldOffset(136)]
     public bool IsMovementInput;
@@ -54,6 +84,9 @@ public unsafe partial struct PlayerMoveControllerWalk
     [FieldOffset(176)]
     public float RotationDirection;
 
+    [FieldOffset(180)]
+    private bool UnknownFlag180;
+
     [FieldOffset(184)]
     private void* InternalVtable1;
 
@@ -62,6 +95,33 @@ public unsafe partial struct PlayerMoveControllerWalk
 
     [FieldOffset(200)]
     public fixed float SentinelFloat[5];
+
+    [FieldOffset(220)]
+    private int Unknown220;
+
+    [FieldOffset(224)]
+    private nint Unknown224;
+
+    [FieldOffset(232)]
+    private nint Unknown232;
+
+    [FieldOffset(240)]
+    private nint Unknown240;
+
+    [FieldOffset(244)]
+    private ushort Unknown244;
+
+    [FieldOffset(246)]
+    private bool UnknownFlag246;
+
+    [FieldOffset(247)]
+    private ushort Unknown247;
+
+    [FieldOffset(248)]
+    private bool UnknownFlag248;
+
+    [FieldOffset(260)]
+    private byte Unknown260;
 
     [FieldOffset(264)]
     private void* InternalVtable3;
@@ -74,6 +134,18 @@ public unsafe partial struct PlayerMoveControllerWalk
 
     [FieldOffset(280)]
     public float MovementForward;
+
+    [FieldOffset(288)]
+    private bool UnknownFlag288;
+
+    [FieldOffset(289)]
+    private bool UnknownFlag289;
+
+    [FieldOffset(290)]
+    private bool UnknownFlag290;
+
+    [FieldOffset(291)]
+    private bool UnknownFlag291;
 
     [FieldOffset(292)]
     public bool IsMovementInputLocked;
