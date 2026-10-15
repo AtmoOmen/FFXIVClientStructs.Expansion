@@ -1,6 +1,7 @@
 using NativeAgentWorldTravel = FFXIVClientStructs.FFXIV.Client.UI.Agent.AgentWorldTravel;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using FFXIVClientStructs.STD;
 using CStringPointer = InteropGenerator.Runtime.CStringPointer;
 
@@ -9,60 +10,67 @@ namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Agent;
 [Agent(AgentId.WorldTravel)]
 [GenerateInterop]
 [Inherits<NativeAgentWorldTravel>]
-[StructLayout(LayoutKind.Explicit, Size = 0x170)]
+[StructLayout(LayoutKind.Explicit, Size = 368)]
 public unsafe partial struct AgentWorldTravel
 {
-    [FieldOffset(0x30)]
+    [FieldOffset(48)]
     public uint YesNo2Id;
 
-    [FieldOffset(0x34)]
+    [FieldOffset(52)]
     public uint WorldTravelFinderStatusAddonId;
-    [FieldOffset(0x38)]
+    [FieldOffset(56)]
     public uint WorldTravelFinderReadyAddonId;
 
-    [FieldOffset(0x3C)]
+    [FieldOffset(60)]
     public int WorldCount;
-    [FieldOffset(0x40)]
+    [FieldOffset(64)]
     public World* Worlds;
 
-    [FieldOffset(0x48)]
+    [FieldOffset(72)]
     public float WorldListTimer;
 
-    [FieldOffset(0x120)]
+    /// <summary>
+    /// 排队与就绪期间为 1。
+    /// </summary>
+    [FieldOffset(288)]
     public byte IsWorldTraveling;
-    [FieldOffset(0x121)]
-    public byte IsInWorldTravelQueue;
 
-    [FieldOffset(0x124)]
+    /// <summary>
+    /// 仅就绪期间为 1。
+    /// </summary>
+    [FieldOffset(289)]
+    public byte IsReady;
+
+    [FieldOffset(292)]
     public uint QueueStartTime;
 
 
-    [FieldOffset(0x128)]
+    [FieldOffset(296)]
     public uint ElapsedQueueTimeSecond;
-    [FieldOffset(0x12C)]
+    [FieldOffset(300)]
     public uint QueuePosition;
-    [FieldOffset(0x130)]
+    [FieldOffset(304)]
     public uint EstimatedWaitTimeMinute;
-    [FieldOffset(0x134)]
+    [FieldOffset(308)]
     public uint LastElapsedQueueTimeSecond;
 
-    [FieldOffset(0x138)]
+    [FieldOffset(312)]
     public byte BetweenAreas;
 
-    [FieldOffset(0x140)]
+    [FieldOffset(320)]
     public World* AllWorlds;
-    [FieldOffset(0x148)]
+    [FieldOffset(328)]
     public int AllWorldCount;
 
-    [FieldOffset(0x14C)]
+    [FieldOffset(332)]
     public ushort DataCenterId;
-    [FieldOffset(0x150)]
+    [FieldOffset(336)]
     public uint SelectedDataCenterIndex;
-    [FieldOffset(0x154)]
+    [FieldOffset(340)]
     public byte HomeWorldDataCenterId;
-    [FieldOffset(0x155)]
+    [FieldOffset(341)]
     public byte CurrentWorldDataCenterId;
-    [FieldOffset(0x158)]
+    [FieldOffset(344)]
     public StdVector<DataCenter> DataCenters;
 
     public Span<World> WorldsSpan =>
@@ -74,6 +82,14 @@ public unsafe partial struct AgentWorldTravel
         AllWorlds != null ?
             new Span<World>(AllWorlds, AllWorldCount + 2) :
             [];
+    
+    [MemberFunction("E8 ?? ?? ?? ?? 40 0A F8 B9 ?? ?? ?? ??")]
+    public partial bool UpdateAddons
+    (
+        NumberArrayData*  numberArray,
+        StringArrayData*  stringArray,
+        bool              a4
+    );
 
     [MemberFunction("48 89 5C 24 ?? 55 56 57 41 56 41 57 48 83 EC ?? 0F B7 42")]
     public partial void OnWorldListPacket
@@ -81,6 +97,9 @@ public unsafe partial struct AgentWorldTravel
         WorldListPacket* packet
     );
 
+    /// <summary>
+    /// 处理 UIModulePacketType 25 的世界旅行状态包。
+    /// </summary>
     [MemberFunction("48 89 5C 24 ?? 57 48 83 EC ?? 48 8B D9 48 8B FA 0F B6 4A ?? 83 E9")]
     public partial void OnWorldTravelStatusPacket
     (
@@ -157,66 +176,102 @@ public unsafe partial struct AgentWorldTravel
     [MemberFunction("48 8B 81 ?? ?? ?? ?? 48 8B 91 ?? ?? ?? ?? 48 3B C2 74 ?? 48 2B D0")]
     public partial int GetDataCenterCount();
 
-    [StructLayout(LayoutKind.Explicit, Size = 0x0C)]
+    [StructLayout(LayoutKind.Explicit, Size = 12)]
     public struct World
     {
-        [FieldOffset(0x00)]
+        [FieldOffset(0)]
         public ushort WorldID;
-        
-        /// <summary>
-        /// 1 = LogMessageId is 0 <br/>
-        /// 2 = home world <br/>
-        /// 4 = current world <br/>
-        /// </summary>
-        [FieldOffset(0x02)]
+
+        [FieldOffset(2)]
         public ushort Flags;
-        [FieldOffset(0x04)]
-        public byte DataCenterId;
-        [FieldOffset(0x08)]
+        
+        [FieldOffset(4)]
+        public byte DataCenterID;
+        
+        [FieldOffset(8)]
         public uint LogMessageID;
     }
 
-    [StructLayout(LayoutKind.Explicit, Size = 0x70)]
+    [StructLayout(LayoutKind.Explicit, Size = 112)]
     public struct DataCenter
     {
-        [FieldOffset(0x00)]
+        [FieldOffset(0)]
         public ushort DataCenterId;
-        [FieldOffset(0x08)]
+        [FieldOffset(8)]
         public Utf8String Name;
     }
 
     [GenerateInterop]
-    [StructLayout(LayoutKind.Explicit, Size = 0x410)]
+    [StructLayout(LayoutKind.Explicit, Size = 1040)]
     public partial struct WorldListPacket
     {
-        [FieldOffset(0x10)]
+        [FieldOffset(16)]
         [FixedSizeArray]
         internal FixedSizeArray128<WorldListEntry> EntriesStorage;
     }
 
-    [StructLayout(LayoutKind.Explicit, Size = 0x08)]
+    [StructLayout(LayoutKind.Explicit, Size = 8)]
     public struct WorldListEntry
     {
-        [FieldOffset(0x00)]
-        public uint LogMessageId;
-        [FieldOffset(0x04)]
-        public ushort WorldId;
-        [FieldOffset(0x06)]
+        [FieldOffset(0)]
+        public uint LogMessageID;
+        
+        [FieldOffset(4)]
+        public ushort WorldID;
+        
+        [FieldOffset(6)]
         private ushort unk06;
     }
 
-    [StructLayout(LayoutKind.Explicit, Size = 0x1C)]
+    /// <summary>
+    /// UIModulePacketType 25 携带的世界旅行状态包。
+    /// </summary>
+    [StructLayout(LayoutKind.Explicit, Size = 28)]
     public struct WorldTravelStatusPacket
     {
-        [FieldOffset(0x10)]
-        public byte Status;
-        [FieldOffset(0x14)]
+        [FieldOffset(16)]
+        public WorldTravelStatus Status;
+
+        /// <summary>
+        /// Status 为 InQueue 时的队列位置，为 0 时按 1 处理。
+        /// </summary>
+        [FieldOffset(20)]
         public uint QueuePosition;
-        [FieldOffset(0x18)]
+
+        /// <summary>
+        /// Status 为 InQueue 时的预计等待分钟数。
+        /// </summary>
+        [FieldOffset(24)]
         public uint EstimatedWaitTimeMinute;
-        [FieldOffset(0x14)]
-        public uint LogMessageId1;
-        [FieldOffset(0x18)]
-        public uint LogMessageId2;
+
+        /// <summary>
+        /// Status 为 Finished 时输出的第一条日志消息。
+        /// </summary>
+        [FieldOffset(20)]
+        public uint LogMessageID1;
+
+        /// <summary>
+        /// Status 为 Finished 时输出的第二条日志消息。
+        /// </summary>
+        [FieldOffset(24)]
+        public uint LogMessageID2;
+    }
+
+    public enum WorldTravelStatus : byte
+    {
+        /// <summary>
+        /// 排队中，随包更新队列位置与预计等待时间。
+        /// </summary>
+        InQueue = 1,
+
+        /// <summary>
+        /// 排队完成，关闭状态窗口并打开 WorldTravelFinderReady 窗口。
+        /// </summary>
+        Ready = 2,
+
+        /// <summary>
+        /// 流程结束，清空排队状态、关闭两个窗口并按包内的日志消息输出提示。
+        /// </summary>
+        Finished = 3
     }
 }
