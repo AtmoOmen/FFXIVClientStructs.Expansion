@@ -19,10 +19,6 @@ public unsafe partial struct AtkAddonControl : ICreatable<AtkAddonControl>
     [FieldOffset(0x50)]
     public ChildAddonInfo* AttachingChildAddon;
 
-    [Obsolete("Use AttachingChildAddon")]
-    [FieldOffset(0x50)]
-    public ChildAddonInfo* TempChildAddonInfoPtr;
-
     [FieldOffset(0x58)]
     public short DragStartX;
     [FieldOffset(0x5A)]

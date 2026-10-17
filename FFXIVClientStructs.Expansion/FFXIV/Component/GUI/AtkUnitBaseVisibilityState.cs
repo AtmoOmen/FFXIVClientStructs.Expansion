@@ -9,12 +9,5 @@ public enum AtkUnitBaseVisibilityState : byte
 
     Show = 1 << 1,
 
-    Hide = 1 << 2,
-
-    [Obsolete("Use TransitionComplete")]
-    Unk1 = TransitionComplete,
-    [Obsolete("Use Show")]
-    IsVisible = Show,
-    [Obsolete("Use Hide")]
-    IsHiddenDueToModal = Hide
+    Hide = 1 << 2
 }
