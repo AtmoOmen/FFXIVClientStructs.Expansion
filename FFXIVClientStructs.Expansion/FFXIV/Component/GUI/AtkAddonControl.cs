@@ -72,11 +72,11 @@ public unsafe partial struct AtkAddonControl : ICreatable<AtkAddonControl>
     [MemberFunction("48 89 5C 24 ?? 48 89 6C 24 ?? 56 41 54 41 55 41 56 41 57 48 81 EC")]
     public partial ChildAddonInfo* RegisterChildAddon
     (
-        ushort addonId,
+        ushort addonID,
         bool   active,
         bool   allowDetach,
         int    tabIndex,
-        int    groupId,
+        int    groupID,
         int    a7,
         bool   attached,
         bool   hideWindowAndFocus,
@@ -122,7 +122,7 @@ public unsafe partial struct AtkAddonControl : ICreatable<AtkAddonControl>
     [MemberFunction("48 89 5C 24 ?? 48 89 7C 24 ?? 41 54 41 56 41 57 48 83 EC ?? 48 8B 79")]
     public partial void ActivateGroup
     (
-        int  groupId,
+        int  groupID,
         bool deactivateOtherGroups = true,
         bool focus                 = true
     );
@@ -137,9 +137,9 @@ public unsafe partial struct AtkAddonControl : ICreatable<AtkAddonControl>
     );
 
     [MemberFunction("48 8B 49 ?? 48 8B 01 48 3B C1 74 ?? 0F 1F 40 ?? 4C 8B 40 ?? 41 39 50")]
-    public partial ChildAddonInfo* GetChildAddonInfoByGroupId
+    public partial ChildAddonInfo* GetChildAddonInfoByGroupID
     (
-        int groupId
+        int groupID
     );
 
     [MemberFunction("48 89 5C 24 ?? 57 48 83 EC ?? 48 8B 79 ?? 33 D2")]
@@ -240,10 +240,10 @@ public unsafe partial struct AtkAddonControl : ICreatable<AtkAddonControl>
         [FieldOffset(0x20)]
         public AtkCollisionNode* CollisionNode;
         [FieldOffset(0x28)]
-        public ushort AddonId;
+        public ushort AddonID;
 
         [FieldOffset(0x2C)]
-        public int GroupId;
+        public int GroupID;
         [FieldOffset(0x30)]
         public int TabIndex;
         [FieldOffset(0x34)]

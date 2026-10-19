@@ -14,12 +14,12 @@ namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Agent;
 public unsafe partial struct AgentWorldTravel
 {
     [FieldOffset(48)]
-    public uint YesNo2Id;
+    public uint YesNo2ID;
 
     [FieldOffset(52)]
-    public uint WorldTravelFinderStatusAddonId;
+    public uint WorldTravelFinderStatusAddonID;
     [FieldOffset(56)]
-    public uint WorldTravelFinderReadyAddonId;
+    public uint WorldTravelFinderReadyAddonID;
 
     [FieldOffset(60)]
     public int WorldCount;
@@ -63,13 +63,13 @@ public unsafe partial struct AgentWorldTravel
     public int AllWorldCount;
 
     [FieldOffset(332)]
-    public ushort DataCenterId;
+    public ushort DataCenterID;
     [FieldOffset(336)]
     public uint SelectedDataCenterIndex;
     [FieldOffset(340)]
-    public byte HomeWorldDataCenterId;
+    public byte HomeWorldDataCenterID;
     [FieldOffset(341)]
-    public byte CurrentWorldDataCenterId;
+    public byte CurrentWorldDataCenterID;
     [FieldOffset(344)]
     public StdVector<DataCenter> DataCenters;
 
@@ -164,13 +164,13 @@ public unsafe partial struct AgentWorldTravel
     [MemberFunction("40 57 44 8B 81")]
     public partial void FilterWorldList
     (
-        ushort dataCenterId
+        ushort dataCenterID
     );
 
     [MemberFunction("40 53 48 83 EC ?? 48 8B 49 ?? 0F B7 DA 48 8B 01 FF 90 ?? ?? ?? ?? 66 85 DB")]
     public partial byte GetWorldDataCenter
     (
-        ushort worldId
+        ushort worldID
     );
 
     [MemberFunction("48 8B 81 ?? ?? ?? ?? 48 8B 91 ?? ?? ?? ?? 48 3B C2 74 ?? 48 2B D0")]
@@ -196,7 +196,7 @@ public unsafe partial struct AgentWorldTravel
     public struct DataCenter
     {
         [FieldOffset(0)]
-        public ushort DataCenterId;
+        public ushort DataCenterID;
         [FieldOffset(8)]
         public Utf8String Name;
     }

@@ -15,7 +15,7 @@ public unsafe partial struct AgentWeeklyBingo
     /// 当前打开的 WeeklyBingoContentList 窗口 ID，为 0 时表示窗口未打开。
     /// </summary>
     [FieldOffset(116)]
-    public uint ContentListAddonId;
+    public uint ContentListAddonID;
 
     /// <summary>
     /// 当前操作的填空槽位索引。

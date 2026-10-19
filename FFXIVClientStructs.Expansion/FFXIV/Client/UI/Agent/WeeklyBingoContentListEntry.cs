@@ -9,7 +9,7 @@ public unsafe struct WeeklyBingoContentListEntry
     /// 副本对应的 ContentFinderCondition 行 ID。
     /// </summary>
     [FieldOffset(0)]
-    public uint ContentFinderConditionId;
+    public uint ContentFinderConditionID;
 
     /// <summary>
     /// 副本所需等级。

@@ -16,7 +16,7 @@ public partial struct OperationGuide
     public short OffsetY;
 
     [FieldOffset(0x08)]
-    public uint AddonTransientId;
+    public uint AddonTransientID;
 
     public partial OperationGuidePoint RelativePoint { readonly get; set; }
 

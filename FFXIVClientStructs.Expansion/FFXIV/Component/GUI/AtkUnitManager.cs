@@ -9,20 +9,20 @@ namespace FFXIVClientStructs.Expansion.FFXIV.Component.GUI;
 public unsafe partial struct AtkUnitManager
 {
     [MemberFunction("E8 ?? ?? ?? ?? 44 0F B6 8C 24 ?? ?? ?? ?? 48 8D 8F")]
-    public partial void SetAddonParentId
+    public partial void SetAddonParentID
     (
-        ushort addonId,
-        ushort parentId
+        ushort addonID,
+        ushort parentID
     );
 
     public void SetAddonBlocking
     (
-        ushort addonId,
+        ushort addonID,
         bool   blocking
     ) =>
         SetAddonBlocking
         (
-            addonId,
+            addonID,
             blocking ?
                 (byte)1 :
                 (byte)0
@@ -31,14 +31,14 @@ public unsafe partial struct AtkUnitManager
     [MemberFunction("E8 ?? ?? ?? ?? 48 8B 07 44 8B C5")]
     public partial void SetAddonBlocking
     (
-        ushort addonId,
+        ushort addonID,
         byte   isBlocking
     );
 
     [MemberFunction("E8 ?? ?? ?? ?? 48 8B 9C 24 ?? ?? ?? ?? 4D 8D 6D 20")]
     public partial void SetAddonHideOnCallback
     (
-        ushort addonId,
+        ushort addonID,
         bool   hideAfterAddonReady,
         bool   addToHudInitList
     );
@@ -46,14 +46,14 @@ public unsafe partial struct AtkUnitManager
     [MemberFunction("E8 ?? ?? ?? ?? 4D 85 F6 0F 84 ?? ?? ?? ?? 0F B7 D6")]
     public partial void AddAddonToHudInitAddonIds
     (
-        ushort addonId
+        ushort addonID
     );
 
     [MemberFunction("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 48 89 7C 24 ?? 33 F6")]
-    public partial uint GetParentAddonsById
+    public partial uint GetParentAddonsByID
     (
         AtkUnitBase** outAddons,
-        ushort        parentId,
+        ushort        parentID,
         int           maxCount
     );
 
@@ -67,9 +67,9 @@ public unsafe partial struct AtkUnitManager
     );
 
     [MemberFunction("E8 ?? ?? ?? ?? BF ?? ?? ?? ?? 49 FF C7")]
-    public partial void CloseAddonById
+    public partial void CloseAddonByID
     (
-        ushort addonId
+        ushort addonID
     );
 
     [MemberFunction("40 53 57 41 56 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 32 DB")]
