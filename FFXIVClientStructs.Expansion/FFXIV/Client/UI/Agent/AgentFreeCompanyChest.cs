@@ -721,6 +721,31 @@ public unsafe partial struct AgentFreeCompanyChest
     }
 
     /// <summary>
+    ///     取得当前页对应的 InventoryType
+    /// </summary>
+    /// <param name="page">Inventory Type</param>
+    /// <returns>是否获取成功</returns>
+    public bool TryGetCurrentInventoryType
+    (
+        out InventoryType page
+    )
+    {
+        page = InventoryType.Invalid;
+
+        switch (TabType)
+        {
+            case 1:
+                page = InventoryType.FreeCompanyCrystals;
+                return true;
+            case 0:
+                page = (InventoryType)(20000 + TabIndex);
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>
     ///     部队储物柜日志中的单个条目。
     /// </summary>
     [StructLayout(LayoutKind.Explicit, Size = 8)]
