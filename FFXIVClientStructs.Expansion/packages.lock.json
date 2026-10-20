@@ -13,6 +13,15 @@
         "requested": "[2.0.5, )",
         "resolved": "2.0.5",
         "contentHash": "8LrlvI1KpjjJ4VGSqZ16yoOCKlQnYS+Y8rYNifNrscmVh5anJcF9E4e0NiDP30BHBMUbkoJ5KdcxoRWM7Pz9Aw=="
+      },
+      "ffxivclientstructs": {
+        "type": "Project",
+        "dependencies": {
+          "InteropGenerator.Runtime": "[1.0.0, )"
+        }
+      },
+      "interopgenerator.runtime": {
+        "type": "Project"
       }
     }
   }

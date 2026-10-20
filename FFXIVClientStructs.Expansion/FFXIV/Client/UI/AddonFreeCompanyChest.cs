@@ -5,6 +5,7 @@ namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI;
 
 [GenerateInterop]
 [Inherits<AtkUnitBase>]
+[Addon("FreeCompanyChest")]
 [StructLayout(LayoutKind.Explicit, Size = 0x4F8)]
 public unsafe partial struct AddonFreeCompanyChest
 {
@@ -152,8 +153,16 @@ public unsafe partial struct AddonFreeCompanyChest
     public bool HideAccess;
 
     /// <summary>
-    ///     各页签的可访问性位图，来自代理的相同字段。
+    ///     各页签的可访问性位图，来自代理的相同字段。<br />
+    ///     位 0 至 4 分别表示第 1 至第 5 个物品页，位 5 表示水晶页，位 6 表示金币页；对应位为 1 时该页可访问。
     /// </summary>
+    [BitField<bool>(nameof(IsPage1Accessible),   0)]
+    [BitField<bool>(nameof(IsPage2Accessible),   1)]
+    [BitField<bool>(nameof(IsPage3Accessible),   2)]
+    [BitField<bool>(nameof(IsPage4Accessible),   3)]
+    [BitField<bool>(nameof(IsPage5Accessible),   4)]
+    [BitField<bool>(nameof(IsCrystalAccessible), 5)]
+    [BitField<bool>(nameof(IsGilAccessible),     6)]
     [FieldOffset(1264)]
     public uint AccessMask;
 

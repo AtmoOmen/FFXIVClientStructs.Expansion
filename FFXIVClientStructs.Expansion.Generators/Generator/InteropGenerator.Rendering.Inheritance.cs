@@ -51,6 +51,7 @@ public sealed partial class InteropGenerator {
                 if (!HasOwnParentField(structInfo, inheritedStruct, offset)) {
                     string fieldName = ResolveParentFieldName(structInfo, inheritedStruct, offset);
                     writer.WriteLine($"""/// <summary>Inherited parent class accessor for <see cref="{inheritedStruct.FullyQualifiedMetadataName}">{inheritedStruct.Name}</see></summary>""");
+                    writer.WriteLine("[global::System.Runtime.CompilerServices.CompilerGeneratedAttribute]");
                     writer.WriteLine($"[global::System.Runtime.InteropServices.FieldOffsetAttribute({offset})] public {inheritedStruct.FullyQualifiedMetadataName} {fieldName};");
                 }
 
@@ -68,6 +69,7 @@ public sealed partial class InteropGenerator {
                 foreach (string inheritedAttribute in field.InheritableAttributes) {
                     writer.WriteLine($"{inheritedAttribute}");
                 }
+                writer.WriteLine("[global::System.Runtime.CompilerServices.CompilerGeneratedAttribute]");
                 writer.WriteLine($"[global::System.Runtime.InteropServices.FieldOffsetAttribute({offset + field.Offset})] public {(field.IsReadOnly ? "readonly " : "")}{field.Type} {adjustedFieldName};");
             }
             alreadyWrittenBases.Add(inheritedStruct.FullyQualifiedMetadataName);
@@ -189,6 +191,7 @@ public sealed partial class InteropGenerator {
             }
         }
         if (!structInfo.HasVirtualTable()) {
+            writer.WriteLine("[global::System.Runtime.CompilerServices.CompilerGeneratedAttribute]");
             writer.WriteLine($"[global::System.Runtime.InteropServices.FieldOffsetAttribute(0)] public {structInfo.Name}VirtualTable* VirtualTable;");
         }
     }
