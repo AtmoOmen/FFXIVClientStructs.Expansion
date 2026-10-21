@@ -38,4 +38,15 @@ public unsafe partial struct AtkUnitBase
 
     [MemberFunction("66 83 B9 ?? ?? ?? ?? ?? 75 ?? 66 83 B9 ?? ?? ?? ?? ?? 75 ?? F6 81")]
     public partial bool IsStandaloneAddon();
+
+    /// <summary>
+    ///     直接更新界面及根节点的缩放，不写入界面配置。
+    /// </summary>
+    /// <param name="scale">相对于全局界面缩放的倍率。</param>
+    /// <returns>成功更新缩放时返回 true；禁止缩放、启用全局缩放模式或根节点不存在时返回 false。</returns>
+    [MemberFunction("48 83 EC ?? 8B 91 ?? ?? ?? ?? 8B C2")]
+    public partial bool SetScaleWithoutConfiguration
+    (
+        float scale
+    );
 }
