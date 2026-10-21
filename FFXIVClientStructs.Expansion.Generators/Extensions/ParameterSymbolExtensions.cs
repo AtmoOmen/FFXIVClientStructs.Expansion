@@ -5,22 +5,42 @@ namespace FFXIVClientStructs.Expansion.Generators.Extensions;
 /// <summary>
 ///     Extension methods for <see cref="IParameterSymbol" /> types.
 /// </summary>
-internal static class IParameterSymbolExtensions {
-    public static string? GetDefaultValueString(this IParameterSymbol symbol) {
+internal static class IParameterSymbolExtensions
+{
+    public static string? GetDefaultValueString
+    (
+        this IParameterSymbol symbol
+    )
+    {
         if (!symbol.HasExplicitDefaultValue)
             return null;
 
-        object? defaultValue = symbol.ExplicitDefaultValue;
+        var defaultValue = symbol.ExplicitDefaultValue;
 
-        if (defaultValue is null)
-            return "null";
+        return defaultValue switch
+        {
+            null                                                                        => "null",
+            bool boolValue                                                              => boolValue.ToLowercaseString(),
+            float                                                                       => defaultValue + "f",
+            _ when symbol.Type is INamedTypeSymbol { TypeKind: TypeKind.Enum } enumType => GetEnumDefaultValueString(enumType, defaultValue),
+            _                                                                           => defaultValue.ToString()
+        };
+    }
 
-        if (defaultValue is bool boolValue)
-            return boolValue.ToLowercaseString();
+    private static string GetEnumDefaultValueString
+    (
+        INamedTypeSymbol enumType,
+        object           defaultValue
+    )
+    {
+        var typeName = enumType.GetFullyQualifiedName();
 
-        if (defaultValue is float floatValue)
-            return defaultValue + "f";
+        foreach (var field in enumType.GetMembers().OfType<IFieldSymbol>())
+        {
+            if (field.HasConstantValue && Equals(field.ConstantValue, defaultValue))
+                return $"{typeName}.{field.Name}";
+        }
 
-        return defaultValue.ToString();
+        return $"({typeName})({defaultValue})";
     }
 }
