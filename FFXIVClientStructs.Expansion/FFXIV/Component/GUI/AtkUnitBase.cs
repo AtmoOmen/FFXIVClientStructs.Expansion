@@ -40,6 +40,18 @@ public unsafe partial struct AtkUnitBase
     public partial bool IsStandaloneAddon();
 
     /// <summary>
+    ///     在界面完成节点设置、默认定位及坐标回写后执行初始化完成回调。
+    /// </summary>
+    /// <param name="valueCount">初始化参数的数量。</param>
+    /// <param name="values">初始化参数数组。</param>
+    [VirtualFunction(50)]
+    public partial void OnSetupComplete
+    (
+        uint      valueCount,
+        AtkValue* values
+    );
+
+    /// <summary>
     ///     直接更新界面及根节点的缩放，不写入界面配置。
     /// </summary>
     /// <param name="scale">相对于全局界面缩放的倍率。</param>
