@@ -21,8 +21,8 @@ public unsafe partial struct AdventureEventHandler
     ///     <see cref="IsUnlocked" /> 表示该条探索笔记所属阶段的解锁条件已满足；
     ///     <see cref="IsWithinTimeWindow" /> 表示当前艾欧泽亚时间处于 <see cref="MinTime" /> 与 <see cref="MaxTime" /> 构成的时间窗口内。
     /// </summary>
-    [BitField<bool>(nameof(IsRecordable), 0)]
-    [BitField<bool>(nameof(IsUnlocked), 1)]
+    [BitField<bool>(nameof(IsRecordable),       0)]
+    [BitField<bool>(nameof(IsUnlocked),         1)]
     [BitField<bool>(nameof(IsWithinTimeWindow), 2)]
     [FieldOffset(440)]
     public byte Flags;
@@ -95,11 +95,11 @@ public unsafe partial struct AdventureEventHandler
     public partial byte Setup();
 
     /// <summary>
-    ///     玩家使用情感动作时检查是否满足记录条件，并在条件满足时把该条探索笔记写入已记录集合。
+    ///     检查玩家是否满足记录条件；传入非零情感动作行号时，同时校验动作是否匹配以及玩家是否已进入目的地事件范围。
     /// </summary>
     /// <param name="gameObject">执行情感动作的目标对象。</param>
-    /// <param name="emoteID">被执行的情感动作行号；为零时只校验条件而不写入记录。</param>
-    /// <returns>条件全部满足且写入成功时返回 true。</returns>
+    /// <param name="emoteID">待校验的情感动作行号；为零时不校验动作与目的地事件范围。</param>
+    /// <returns>校验通过时返回 true；本方法不执行情感动作，也不写入记录。</returns>
     [VirtualFunction(9)]
     public partial bool TryPerformEmote
     (
