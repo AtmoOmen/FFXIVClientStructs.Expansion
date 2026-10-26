@@ -1,3 +1,4 @@
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -970,22 +971,22 @@ public unsafe partial struct AgentCollectablesShop
         public struct SubmitItem
         {
             /// <summary>
-            ///     物品 id。
+            ///     收藏品所在的背包容器。
             /// </summary>
             [FieldOffset(0)]
-            public uint ItemID;
+            public InventoryType Container;
 
             /// <summary>
-            ///     背包格索引。
+            ///     收藏品所在的背包格索引。
             /// </summary>
             [FieldOffset(4)]
             public ushort Slot;
 
             /// <summary>
-            ///     该格中的物品数量。
+            ///     该收藏品的实际收藏价值，用于确定提交奖励档位。
             /// </summary>
             [FieldOffset(6)]
-            public ushort Count;
+            public ushort Collectability;
         }
 
         /// <summary>
