@@ -12,7 +12,7 @@
 
 ```powershell
 $ffcsIda = 'D:\Personal\Document\GitHub\Dalamud\lib\FFXIVClientStructs\ida'
-$assembly = '..\FFXIVClientStructs.Expansion\bin\Release\FFXIVClientStructs.Expansion.dll'
+$assembly = '..\FFXIVClientStructs.Expansion\bin\Debug\FFXIVClientStructs.Expansion.dll'
 $client = 'E:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A Realm Reborn\clients\7.57hf1\ffxiv_dx11.exe'
 
 python -X utf8 -B .\ffxiv_expansion_export.py --assembly $assembly --ffcs-ida $ffcsIda --client $client --output .\expansion.generated.json
