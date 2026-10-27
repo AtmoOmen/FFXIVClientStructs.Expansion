@@ -8,3 +8,5 @@
 - `FixedSizeArrayXX` 类型最后的数字为数组长度，需要为 internal 类型，需要标注 [FixedSizeArray]。
     - 如果是字符串需要在 [FixedSizeArray] 标记中指定 isString 为 true。
     - 与原版不同，命名需要为 `YYYYStorage`，生成器会自动剥离名称结尾的 `Storage`。
+- 严禁将虚表声明为 `void**`，如有声明必要，必须要为具体类型，否则不要声明。
+- 特征码/签名生成处既可以为函数头也可以为交叉引用点。
