@@ -1,4 +1,3 @@
-using NativeAgentWeeklyBingo = FFXIVClientStructs.FFXIV.Client.UI.Agent.AgentWeeklyBingo;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.STD;
@@ -7,7 +6,7 @@ namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Agent;
 
 [Agent(AgentId.WeeklyBingo)]
 [GenerateInterop]
-[Inherits<NativeAgentWeeklyBingo>]
+[Inherits<FFXIVClientStructs.FFXIV.Client.UI.Agent.AgentWeeklyBingo>]
 [StructLayout(LayoutKind.Explicit, Size = 704)]
 public unsafe partial struct AgentWeeklyBingo
 {
@@ -46,4 +45,38 @@ public unsafe partial struct AgentWeeklyBingo
     /// </summary>
     [MemberFunction("41 57 48 83 EC ?? 83 79 ?? ?? 4C 8B F9 0F 85")]
     public partial void OpenContentList();
+    
+    [StructLayout(LayoutKind.Explicit, Size = 216)]
+    public unsafe struct WeeklyBingoContentListEntry
+    {
+        /// <summary>
+        /// 副本对应的 ContentFinderCondition 行 ID。
+        /// </summary>
+        [FieldOffset(0)]
+        public uint ContentFinderConditionID;
+
+        /// <summary>
+        /// 副本所需等级。
+        /// </summary>
+        [FieldOffset(4)]
+        public ushort RequiredLevel;
+
+        /// <summary>
+        /// 副本在任务搜索器中的排序键，与所需等级一起用于列表排序。
+        /// </summary>
+        [FieldOffset(6)]
+        public ushort SortKey;
+
+        /// <summary>
+        /// 列表左侧显示的等级文本。
+        /// </summary>
+        [FieldOffset(8)]
+        public Utf8String LevelText;
+
+        /// <summary>
+        /// 列表右侧显示的副本名。
+        /// </summary>
+        [FieldOffset(112)]
+        public Utf8String NameText;
+    }
 }
