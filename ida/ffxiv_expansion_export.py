@@ -585,12 +585,7 @@ def merge_structs(expansion, upstream):
             }
             return
         generic = generic_parts(name)
-        if generic is None or generic[0] not in (
-            "StdVector",
-            "StdMap",
-            "StdPair",
-            "RedBlackTree::Node",
-        ):
+        if generic is None:
             return
         candidates = []
         for key, prototype in originals.items():
