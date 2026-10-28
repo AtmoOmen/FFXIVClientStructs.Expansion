@@ -6,7 +6,7 @@ namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Agent;
 
 /// <summary>
 ///     打字游戏的输入代理（AgentKTGInput，内部编号 398）。<br />
-///     代理在副本内接管本地玩家的打字输入：每帧把聊天输入框的文本、副本控制器的阶段图像编号与爆发状态剩余时间
+///     代理在副本内接管本地玩家的打字输入：每帧把聊天输入框的文本、副本控制器的阶段图像编号与禁止打字状态剩余时间
 ///     下发给 KTGInput 窗口，接收窗口提交的打字结果并转发给副本控制器，同时负责退出确认与长时间未输入的处理。
 /// </summary>
 [Agent(AgentId.Unk398)]
@@ -17,7 +17,7 @@ public unsafe partial struct AgentKTGInput
 {
     /// <summary>
     ///     KTG 的 HUD 代理，显示时取得，隐藏时清空。<br />
-    ///     代理通过它读取 KTGInput 窗口 id 与爆发状态剩余时间。
+    ///     代理通过它读取 KTGInput 窗口 id 与禁止打字状态剩余时间。
     /// </summary>
     [FieldOffset(40)]
     public AgentKTGHud* HudAgent;
@@ -109,7 +109,10 @@ public unsafe partial struct AgentKTGInput
     /// <param name="inputValue">类型为字符串的界面值，文字必须在调用期间保持有效。</param>
     /// <returns>是否匹配到当前副本中的有效词条。</returns>
     [MemberFunction("40 55 56 48 8D 6C 24 ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 ?? 8B 02")]
-    public partial bool SubmitWord(AtkValue* inputValue);
+    public partial bool SubmitWord
+    (
+        AtkValue* inputValue
+    );
 
     /// <summary>
     ///     打开退出确认窗口，确认后退出当前副本。<br />
