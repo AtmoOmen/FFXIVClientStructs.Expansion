@@ -279,10 +279,10 @@ public unsafe partial struct AgentKTGResult
         public ulong Unk48;
 
         /// <summary>
-        ///     排序键，所有玩家中的最大值用于确定名次。
+        ///     比分，用于确定名次。
         /// </summary>
         [FieldOffset(56)]
-        public uint SortKey;
+        public uint Score;
     }
 
     /// <summary>
