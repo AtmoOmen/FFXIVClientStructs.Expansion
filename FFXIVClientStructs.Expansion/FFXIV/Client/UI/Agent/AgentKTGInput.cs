@@ -1,5 +1,6 @@
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.Excel;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Agent;
 
@@ -100,6 +101,15 @@ public unsafe partial struct AgentKTGInput
     /// <returns>代理自身。</returns>
     [MemberFunction("40 53 48 83 EC ?? 48 8B D9 E8 ?? ?? ?? ?? 48 8D 05 ?? ?? ?? ?? C7 43 ?? ?? ?? ?? ?? 48 89 03 33 C0 48 89 43 ?? 48 89 43 ?? 89 43 ?? 66 89 43")]
     public partial AgentKTGInput* Ctor();
+
+    /// <summary>
+    ///     提交魔光键影词条，按当前客户端语言规范化文字，并匹配副本内敌人或屏障的名字与称号。<br />
+    ///     匹配成功时交由客户端发动攻击或强化屏障，不依赖当前选中的目标。
+    /// </summary>
+    /// <param name="inputValue">类型为字符串的界面值，文字必须在调用期间保持有效。</param>
+    /// <returns>是否匹配到当前副本中的有效词条。</returns>
+    [MemberFunction("40 55 56 48 8D 6C 24 ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 ?? 8B 02")]
+    public partial bool SubmitWord(AtkValue* inputValue);
 
     /// <summary>
     ///     打开退出确认窗口，确认后退出当前副本。<br />
