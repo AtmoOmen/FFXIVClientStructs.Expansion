@@ -276,10 +276,10 @@ public unsafe partial struct AgentKTGHud
     public uint TrackedEntityID;
 
     /// <summary>
-    ///     构造与重置时置为 -1 且未在客户端代码中读写的保留值。
+    ///     爆发状态（状态 0x14E3）在状态管理器中的索引缓存，-1 表示尚未查询或状态不存在。
     /// </summary>
     [FieldOffset(744)]
-    public int Unk744;
+    public int FeverStatusIndex;
 
     /// <summary>
     ///     构造代理并初始化词条集合、四名队员的名字条与全部数值字段。
