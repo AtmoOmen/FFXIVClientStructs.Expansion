@@ -543,20 +543,22 @@ def merge_structs(expansion, upstream):
         "LPCRITICAL_SECTION": 8,
     }
 
-    def measure(name):
+    def measure(name, require_alignment=False):
         if name.endswith("*"):
             return 8, 8
         if name in primitive_sizes:
             size = primitive_sizes[name]
             return size, size
         if name in enums:
-            return measure(enums[name]["underlying"])
+            return measure(enums[name]["underlying"], require_alignment)
         ensure_type(name)
         definition = all_structs[name]
+        if not require_alignment and definition.get("size"):
+            return definition["size"], None
         size = 0
         alignment = 1
         for member in definition["fields"]:
-            width, boundary = measure(member["type"])
+            width, boundary = measure(member["type"], True)
             alignment = max(alignment, min(boundary, 8))
             size = max(size, member["offset"] + width * member.get("size", 1))
         size = max(size, definition.get("size") or 0)
@@ -618,7 +620,7 @@ def merge_structs(expansion, upstream):
             field["type"] = pattern.sub(
                 lambda match: replacements[match[0]], field["type"]
             )
-            width, boundary = measure(field["type"])
+            width, boundary = measure(field["type"], True)
             boundary = min(boundary, 8)
             offset = (offset + boundary - 1) // boundary * boundary
             field["offset"] = offset
