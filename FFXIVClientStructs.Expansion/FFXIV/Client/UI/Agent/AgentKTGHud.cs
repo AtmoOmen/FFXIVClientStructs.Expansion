@@ -60,10 +60,10 @@ public unsafe partial struct AgentKTGHud
     public uint ScoreStage;
 
     /// <summary>
-    ///     每帧从副本控制器读取的第 6 个数值，作为得分窗口的阶段上限参数。
+    ///     额外奖励剩余时间，毫秒。
     /// </summary>
     [FieldOffset(620)]
-    public uint ScoreStageMax;
+    public uint ScoreBonusTime;
 
     /// <summary>
     ///     副本控制器的关卡状态，取值 0 至 6，-1 表示尚未同步。
