@@ -70,6 +70,19 @@ public unsafe partial struct InstanceContentKeyboundBrawler
     public partial void Finalizer();
 
     /// <summary>
+    ///     尝试提交输入结果并攻击敌人。
+    /// </summary>
+    /// <param name="target">要攻击的敌人目标</param>
+    /// <param name="matchedWord">是否为错误输入。</param>
+    /// <returns>是否提交成功</returns>
+    [MemberFunction("48 89 5C 24 ?? 56 57 41 56 48 83 EC ?? 48 8B 1D")]
+    public partial bool TrySubmitInputResult
+    (
+        GameObject* target,
+        bool        matchedWord
+    );
+
+    /// <summary>
     ///     处理玩家在聊天输入框中提交的文本：要求文本由十个数字字符或十个数字词逐位组成，最多十位。<br />
     ///     解析成功时输出当前选中的目标与解析出的数值，解析失败或没有选中目标时返回假。
     /// </summary>
