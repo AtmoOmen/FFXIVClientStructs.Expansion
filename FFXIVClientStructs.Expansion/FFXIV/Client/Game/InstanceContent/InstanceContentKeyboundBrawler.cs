@@ -70,11 +70,12 @@ public unsafe partial struct InstanceContentKeyboundBrawler
     public partial void Finalizer();
 
     /// <summary>
-    ///     尝试提交输入结果并攻击敌人。
+    ///     尝试提交输入结果，通过动作管理器攻击敌人、强化屏障或提交错误输入。<br />
+    ///     正确输入时传入目标与 true；错误输入时传入空目标与 false，对本地玩家使用动作 49520。
     /// </summary>
-    /// <param name="target">要攻击的敌人目标</param>
-    /// <param name="matchedWord">是否为错误输入。</param>
-    /// <returns>是否提交成功</returns>
+    /// <param name="target">正确输入对应的敌人或屏障；错误输入时为空。</param>
+    /// <param name="matchedWord">是否匹配到正确词条；true 表示正确输入，false 表示错误输入。</param>
+    /// <returns>是否成功提交对应动作；返回 false 时不代表词条匹配失败。</returns>
     [MemberFunction("48 89 5C 24 ?? 56 57 41 56 48 83 EC ?? 48 8B 1D")]
     public partial bool TrySubmitInputResult
     (
