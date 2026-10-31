@@ -14,10 +14,11 @@ public sealed partial class InteropGenerator
         CancellationToken token
     )
     {
-        var methods          = ImmutableArray.CreateBuilder<MethodInfo>();
-        var virtualFunctions = ImmutableArray.CreateBuilder<VirtualFunctionInfo>();
-        var fields           = ImmutableArray.CreateBuilder<FieldInfo>();
-        var properties       = ImmutableArray.CreateBuilder<PropertyInfo>();
+        var methods                 = ImmutableArray.CreateBuilder<MethodInfo>();
+        var memberFunctionDelegates = ImmutableArray.CreateBuilder<MethodInfo>();
+        var virtualFunctions        = ImmutableArray.CreateBuilder<VirtualFunctionInfo>();
+        var fields                  = ImmutableArray.CreateBuilder<FieldInfo>();
+        var properties              = ImmutableArray.CreateBuilder<PropertyInfo>();
         var reference = compilation.References.OfType<PortableExecutableReference>()
                                    .Single
                                    (candidate => SymbolEqualityComparer.Default.Equals
@@ -33,6 +34,10 @@ public sealed partial class InteropGenerator
         var fieldOffsets = definition.GetFields().Select(reader.GetFieldDefinition)
                                      .ToDictionary(field => reader.GetString(field.Name), field => field.GetOffset());
         var virtualOffsets = new Dictionary<string, int>();
+        var delegateTypes = symbol.GetTypeMembers("Delegates")
+                                  .SelectMany(type => type.GetTypeMembers())
+                                  .Where(type => type.TypeKind == TypeKind.Delegate)
+                                  .ToDictionary(type => (type.Name, type.Arity));
 
         foreach (var nestedHandle in definition.GetNestedTypes())
         {
@@ -74,6 +79,22 @@ public sealed partial class InteropGenerator
             else
             {
                 methods.Add(methodInfo);
+                if (delegateTypes.TryGetValue((method.Name, method.Arity), out var delegateType) &&
+                    delegateType.DelegateInvokeMethod is { } invokeMethod                        &&
+                    invokeMethod.Parameters.Length ==
+                    method.Parameters.Length +
+                    (method.IsStatic ?
+                         0 :
+                         1) &&
+                    invokeMethod.Parameters.Skip
+                                (
+                                    method.IsStatic ?
+                                        0 :
+                                        1
+                                )
+                                .Select(parameter => (parameter.RefKind, parameter.Type.GetFullyQualifiedName()))
+                                .SequenceEqual(methodInfo.Parameters.Select(parameter => (parameter.RefKind, parameter.Type))))
+                    memberFunctionDelegates.Add(methodInfo);
             }
         }
 
@@ -129,7 +150,7 @@ public sealed partial class InteropGenerator
             definition.GetLayout().Size,
             ImmutableArray<OwnMemberInfo>.Empty,
             true,
-            new ExtraInheritedStructInfo(fields.ToImmutable(), methods.ToImmutable(), properties.ToImmutable())
+            new ExtraInheritedStructInfo(fields.ToImmutable(), methods.ToImmutable(), properties.ToImmutable(), memberFunctionDelegates.ToImmutable())
         );
     }
 

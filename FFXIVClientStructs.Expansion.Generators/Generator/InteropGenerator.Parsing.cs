@@ -8,43 +8,67 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace FFXIVClientStructs.Expansion.Generators.Generator;
 
-public sealed partial class InteropGenerator {
-
-    private static StructInfo ParseStructInfo(INamedTypeSymbol structSymbol, AttributeData generateInteropAttributeData, CancellationToken token) {
+public sealed partial class InteropGenerator
+{
+    private static StructInfo ParseStructInfo(INamedTypeSymbol structSymbol, AttributeData generateInteropAttributeData, CancellationToken token)
+    {
         ExtraInheritedStructInfo? extraInheritedStructInfo = null;
         generateInteropAttributeData.TryGetConstructorArgument(0, out bool isInherited);
-        ParseMethods(structSymbol,
+        ParseMethods
+        (
+            structSymbol,
             token,
             isInherited,
             out EquatableArray<MemberFunctionInfo> memberFunctions,
             out EquatableArray<VirtualFunctionInfo> virtualFunctions,
             out EquatableArray<StaticAddressInfo> staticAddresses,
             out EquatableArray<StringOverloadInfo> stringOverloads,
-            out EquatableArray<MethodInfo> extraPublicMethods);
+            out EquatableArray<MethodInfo> extraPublicMethods
+        );
         token.ThrowIfCancellationRequested();
-        ParseFields(structSymbol, token, isInherited, out EquatableArray<FixedSizeArrayInfo> fixedSizeArrays, out EquatableArray<BitFieldInfo> bitFields, out EquatableArray<FieldInfo> publicFields);
+        ParseFields
+        (
+            structSymbol,
+            token,
+            isInherited,
+            out EquatableArray<FixedSizeArrayInfo> fixedSizeArrays,
+            out EquatableArray<BitFieldInfo> bitFields,
+            out EquatableArray<FieldInfo> publicFields
+        );
         token.ThrowIfCancellationRequested();
         ParseOwnMembers(structSymbol, fixedSizeArrays, token, out EquatableArray<OwnMemberInfo> ownMembers);
         token.ThrowIfCancellationRequested();
         SignatureInfo? virtualTableSignatureInfo = null;
-        uint? virtualTableFunctionCount = null;
-        if (structSymbol.TryGetAttributeWithFullyQualifiedMetadataName(InteropTypeNames.VirtualTableAttribute, out AttributeData? virtualTableAttribute)) {
-            if (virtualTableAttribute.TryGetConstructorArgument(0, out string? signature)) {
+        uint?          virtualTableFunctionCount = null;
+
+        if (structSymbol.TryGetAttributeWithFullyQualifiedMetadataName(InteropTypeNames.VirtualTableAttribute, out AttributeData? virtualTableAttribute))
+        {
+            if (virtualTableAttribute.TryGetConstructorArgument(0, out string? signature))
+            {
                 if (virtualTableAttribute.ConstructorArguments[1].Kind == TypedConstantKind.Array &&
-                    virtualTableAttribute.TryGetMultiValueConstructorArgument(1, out ImmutableArray<ushort>? multipleOffsets)) {
+                    virtualTableAttribute.TryGetMultiValueConstructorArgument(1, out ImmutableArray<ushort>? multipleOffsets))
+                {
                     virtualTableSignatureInfo = new SignatureInfo(signature, multipleOffsets.Value);
-                } else if (virtualTableAttribute.TryGetConstructorArgument(1, out ushort? singleOffset)) {
+                }
+                else if (virtualTableAttribute.TryGetConstructorArgument(1, out ushort? singleOffset))
+                {
                     ImmutableArray<ushort> values = [singleOffset.Value];
                     virtualTableSignatureInfo = new SignatureInfo(signature, values);
                 }
             }
-            if (virtualTableAttribute.TryGetConstructorArgument(2, out uint? functionCount)) {
-                virtualTableFunctionCount = functionCount == 0 ? null : functionCount;
+
+            if (virtualTableAttribute.TryGetConstructorArgument(2, out uint? functionCount))
+            {
+                virtualTableFunctionCount = functionCount == 0 ?
+                                                null :
+                                                functionCount;
             }
         }
 
         using ImmutableArrayBuilder<InheritanceInfo> inheritanceInfoBuilder = new();
-        foreach (AttributeData attributeData in structSymbol.GetAttributes()) {
+
+        foreach (AttributeData attributeData in structSymbol.GetAttributes())
+        {
             if (attributeData.AttributeClass is not { } attributeSymbol) continue;
             if (!attributeSymbol.HasFullyQualifiedMetadataName(InteropTypeNames.InheritsAttribute)) continue;
             if (attributeData.ConstructorArguments.Length != 1 ||
@@ -52,32 +76,45 @@ public sealed partial class InteropGenerator {
                 continue;
             if (attributeSymbol.TypeArguments.Length != 1) continue;
 
-            InheritanceInfo inheritanceInfo = new(
+            InheritanceInfo inheritanceInfo = new
+            (
                 attributeSymbol.TypeArguments[0].GetNameWithContainingTypeAndNamespace(),
                 parentOffset.Value
             );
             inheritanceInfoBuilder.Add(inheritanceInfo);
         }
+
         using ImmutableArrayBuilder<string> hierarchy = new();
 
         for (INamedTypeSymbol? parent = structSymbol;
              parent is not null;
-             parent = parent.ContainingType) {
+             parent = parent.ContainingType)
+        {
             hierarchy.Add(parent.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat));
         }
+
         int? structSize = null;
 
-        if (structSymbol.TryGetAttributeWithFullyQualifiedMetadataName("System.Runtime.InteropServices.StructLayoutAttribute", out AttributeData? structLayoutAttributeData)) {
+        if (structSymbol.TryGetAttributeWithFullyQualifiedMetadataName
+                ("System.Runtime.InteropServices.StructLayoutAttribute", out AttributeData? structLayoutAttributeData))
+        {
             structLayoutAttributeData.TryGetNamedArgument("Size", out structSize);
         }
-        if (isInherited) {
+
+        if (isInherited)
+        {
             ParseProperties(structSymbol, token, out EquatableArray<PropertyInfo> publicProperties);
-            extraInheritedStructInfo = new ExtraInheritedStructInfo(
+            extraInheritedStructInfo = new ExtraInheritedStructInfo
+            (
                 publicFields,
                 extraPublicMethods,
-                publicProperties);
+                publicProperties,
+                ImmutableArray<MethodInfo>.Empty
+            );
         }
-        return new StructInfo(
+
+        return new StructInfo
+        (
             structSymbol.GetNameWithContainingTypeAndNamespace(),
             structSymbol.ContainingNamespace.GetNameWithContainingTypeAndNamespace(),
             hierarchy.ToImmutable(),
@@ -93,29 +130,41 @@ public sealed partial class InteropGenerator {
             structSize,
             ownMembers,
             false,
-            extraInheritedStructInfo);
+            extraInheritedStructInfo
+        );
     }
 
-    private static void ParseMethods(INamedTypeSymbol structSymbol, CancellationToken token, bool isInherited,
-        out EquatableArray<MemberFunctionInfo> memberFunctions,
+    private static void ParseMethods
+    (
+        INamedTypeSymbol                        structSymbol,
+        CancellationToken                       token,
+        bool                                    isInherited,
+        out EquatableArray<MemberFunctionInfo>  memberFunctions,
         out EquatableArray<VirtualFunctionInfo> virtualFunctions,
-        out EquatableArray<StaticAddressInfo> staticAddresses,
-        out EquatableArray<StringOverloadInfo> stringOverloads,
-        out EquatableArray<MethodInfo> extraPublicMethods) {
+        out EquatableArray<StaticAddressInfo>   staticAddresses,
+        out EquatableArray<StringOverloadInfo>  stringOverloads,
+        out EquatableArray<MethodInfo>          extraPublicMethods
+    )
+    {
 
-        using ImmutableArrayBuilder<MemberFunctionInfo> memberFunctionsBuilder = new();
-        using ImmutableArrayBuilder<VirtualFunctionInfo> virtualFunctionBuilder = new();
-        using ImmutableArrayBuilder<StaticAddressInfo> staticAddressesBuilder = new();
-        using ImmutableArrayBuilder<StringOverloadInfo> stringOverloadsBuilder = new();
-        using ImmutableArrayBuilder<MethodInfo> extraPublicMethodsBuilder = new();
+        using ImmutableArrayBuilder<MemberFunctionInfo>  memberFunctionsBuilder    = new();
+        using ImmutableArrayBuilder<VirtualFunctionInfo> virtualFunctionBuilder    = new();
+        using ImmutableArrayBuilder<StaticAddressInfo>   staticAddressesBuilder    = new();
+        using ImmutableArrayBuilder<StringOverloadInfo>  stringOverloadsBuilder    = new();
+        using ImmutableArrayBuilder<MethodInfo>          extraPublicMethodsBuilder = new();
 
-        foreach (IMethodSymbol methodSymbol in structSymbol.GetMembers().OfType<IMethodSymbol>()) {
+        foreach (IMethodSymbol methodSymbol in structSymbol.GetMembers().OfType<IMethodSymbol>())
+        {
             MethodInfo? methodInfo = null;
-            if (methodSymbol.TryGetAttributeWithFullyQualifiedMetadataName(InteropTypeNames.MemberFunctionAttribute, out AttributeData? mfAttribute)) {
+
+            if (methodSymbol.TryGetAttributeWithFullyQualifiedMetadataName(InteropTypeNames.MemberFunctionAttribute, out AttributeData? mfAttribute))
+            {
                 var relativeOffsets = ImmutableArray<ushort>.Empty;
                 if (!mfAttribute.TryGetConstructorArgument(0, out string? signature))
                     continue;
-                if (mfAttribute.ConstructorArguments.Length == 2) {
+
+                if (mfAttribute.ConstructorArguments.Length == 2)
+                {
                     if (mfAttribute.ConstructorArguments[1].Kind == TypedConstantKind.Array &&
                         mfAttribute.TryGetMultiValueConstructorArgument(1, out ImmutableArray<ushort>? multipleOffsets))
                         relativeOffsets = multipleOffsets.Value;
@@ -128,12 +177,16 @@ public sealed partial class InteropGenerator {
                 if (!TryParseMethod(methodSymbol, isInherited, token, out methodInfo))
                     continue;
 
-                MemberFunctionInfo memberFunctionInfo = new(
+                MemberFunctionInfo memberFunctionInfo = new
+                (
                     methodInfo,
-                    new SignatureInfo(signature, relativeOffsets));
+                    new SignatureInfo(signature, relativeOffsets)
+                );
 
                 memberFunctionsBuilder.Add(memberFunctionInfo);
-            } else if (methodSymbol.TryGetAttributeWithFullyQualifiedMetadataName(InteropTypeNames.VirtualFunctionAttribute, out AttributeData? vfAttribute)) {
+            }
+            else if (methodSymbol.TryGetAttributeWithFullyQualifiedMetadataName(InteropTypeNames.VirtualFunctionAttribute, out AttributeData? vfAttribute))
+            {
                 if (vfAttribute.ConstructorArguments.Length != 1 ||
                     !vfAttribute.TryGetConstructorArgument(0, out uint? index))
                     continue;
@@ -141,13 +194,17 @@ public sealed partial class InteropGenerator {
                 if (!TryParseMethod(methodSymbol, isInherited, token, out methodInfo))
                     continue;
 
-                VirtualFunctionInfo virtualFunctionInfo = new(
+                VirtualFunctionInfo virtualFunctionInfo = new
+                (
                     methodInfo,
-                    index.Value);
+                    index.Value
+                );
 
                 virtualFunctionBuilder.Add(virtualFunctionInfo);
-            } else if (methodSymbol.TryGetAttributeWithFullyQualifiedMetadataName(InteropTypeNames.StaticAddressAttribute, out AttributeData? saAttribute)) {
-                if (saAttribute.ConstructorArguments.Length != 3 ||
+            }
+            else if (methodSymbol.TryGetAttributeWithFullyQualifiedMetadataName(InteropTypeNames.StaticAddressAttribute, out AttributeData? saAttribute))
+            {
+                if (saAttribute.ConstructorArguments.Length != 3                     ||
                     !saAttribute.TryGetConstructorArgument(0, out string? signature) ||
                     !saAttribute.TryGetConstructorArgument(2, out bool? isPointer))
                     continue;
@@ -155,48 +212,65 @@ public sealed partial class InteropGenerator {
                 ImmutableArray<ushort> relativeOffsets;
 
                 if (saAttribute.ConstructorArguments[1].Kind == TypedConstantKind.Array &&
-                    saAttribute.TryGetMultiValueConstructorArgument(1, out ImmutableArray<ushort>? multipleOffsets)) {
+                    saAttribute.TryGetMultiValueConstructorArgument(1, out ImmutableArray<ushort>? multipleOffsets))
+                {
                     relativeOffsets = multipleOffsets.Value;
-                } else if (saAttribute.TryGetConstructorArgument(1, out ushort? singleOffset)) {
+                }
+                else if (saAttribute.TryGetConstructorArgument(1, out ushort? singleOffset))
+                {
                     relativeOffsets = [singleOffset.Value];
-                } else {
+                }
+                else
+                {
                     continue;
                 }
 
                 if (!TryParseMethod(methodSymbol, isInherited, token, out methodInfo))
                     continue;
 
-                StaticAddressInfo staticAddressInfo = new(
+                StaticAddressInfo staticAddressInfo = new
+                (
                     methodInfo,
                     new SignatureInfo(signature, relativeOffsets),
-                    isPointer.Value);
+                    isPointer.Value
+                );
 
                 staticAddressesBuilder.Add(staticAddressInfo);
-            } else if (isInherited && methodSymbol.DeclaredAccessibility == Accessibility.Public) {
+            }
+            else if (isInherited && methodSymbol.DeclaredAccessibility == Accessibility.Public)
+            {
                 if (!TryParseMethod(methodSymbol, isInherited, token, out methodInfo))
                     continue;
 
                 extraPublicMethodsBuilder.Add(methodInfo);
             }
-            if (methodSymbol.TryGetAttributeWithFullyQualifiedMetadataName(InteropTypeNames.GenerateStringOverloadsAttribute, out _)) {
-                if (methodInfo is null) {
+
+            if (methodSymbol.TryGetAttributeWithFullyQualifiedMetadataName(InteropTypeNames.GenerateStringOverloadsAttribute, out _))
+            {
+                if (methodInfo is null)
+                {
                     if (!TryParseMethod(methodSymbol, isInherited, token, out methodInfo))
                         continue;
                 }
 
                 using ImmutableArrayBuilder<string> ignoredParametersBuilder = new();
 
-                foreach (IParameterSymbol parameterSymbol in methodSymbol.Parameters) {
+                foreach (IParameterSymbol parameterSymbol in methodSymbol.Parameters)
+                {
                     if (parameterSymbol.TryGetAttributeWithFullyQualifiedMetadataName(InteropTypeNames.StringIgnoreAttribute, out _))
                         ignoredParametersBuilder.Add(parameterSymbol.Name);
                 }
 
-                EquatableArray<string> attributes = isInherited ? methodInfo.InheritableAttributes : ParseInheritedAttributes(methodSymbol, token);
+                EquatableArray<string> attributes = isInherited ?
+                                                        methodInfo.InheritableAttributes :
+                                                        ParseInheritedAttributes(methodSymbol, token);
 
-                StringOverloadInfo stringOverloadInfo = new(
+                StringOverloadInfo stringOverloadInfo = new
+                (
                     methodInfo,
                     ignoredParametersBuilder.ToImmutable(),
-                    attributes);
+                    attributes
+                );
 
                 stringOverloadsBuilder.Add(stringOverloadInfo);
 
@@ -204,35 +278,50 @@ public sealed partial class InteropGenerator {
 
             token.ThrowIfCancellationRequested();
         }
-        memberFunctions = memberFunctionsBuilder.ToImmutable();
-        virtualFunctions = virtualFunctionBuilder.ToImmutable();
-        staticAddresses = staticAddressesBuilder.ToImmutable();
-        stringOverloads = stringOverloadsBuilder.ToImmutable();
+
+        memberFunctions    = memberFunctionsBuilder.ToImmutable();
+        virtualFunctions   = virtualFunctionBuilder.ToImmutable();
+        staticAddresses    = staticAddressesBuilder.ToImmutable();
+        stringOverloads    = stringOverloadsBuilder.ToImmutable();
         extraPublicMethods = extraPublicMethodsBuilder.ToImmutable();
     }
 
-    private static bool TryParseMethod(IMethodSymbol methodSymbol, bool isInherited, CancellationToken token, [NotNullWhen(true)] out MethodInfo? methodInfo) {
-        if (!methodSymbol.TryGetSyntaxNode(token, out MethodDeclarationSyntax? methodSyntax)) {
+    private static bool TryParseMethod(IMethodSymbol methodSymbol, bool isInherited, CancellationToken token, [NotNullWhen(true)] out MethodInfo? methodInfo)
+    {
+        if (!methodSymbol.TryGetSyntaxNode(token, out MethodDeclarationSyntax? methodSyntax))
+        {
             methodInfo = null;
             return false;
         }
 
-        var constraints = string.Empty;
+        var                           constraints   = string.Empty;
         ImmutableArrayBuilder<string> typeArguments = new();
 
-        if (methodSymbol.TypeParameters.Any()) {
-            ImmutableArray<SymbolDisplayPart> symbolDisplayParts = methodSymbol.ToDisplayParts(new SymbolDisplayFormat(genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeConstraints));
-            constraints = string.Join("", symbolDisplayParts[1..].Select(t => {
-                if (t.Kind != SymbolDisplayPartKind.InterfaceName) return t.ToString();
-                var typeArguments = ((INamedTypeSymbol)t.Symbol!).TypeArguments;
-                return typeArguments.Length <= 0 ? t.ToString() : $"{t.ToString()}<{string.Join(", ", typeArguments.Select(t => t.Name))}>";
-            }));
+        if (methodSymbol.TypeParameters.Any())
+        {
+            ImmutableArray<SymbolDisplayPart> symbolDisplayParts = methodSymbol.ToDisplayParts
+                (new SymbolDisplayFormat(genericsOptions: SymbolDisplayGenericsOptions.IncludeTypeConstraints));
+            constraints = string.Join
+            (
+                "",
+                symbolDisplayParts[1..].Select
+                (t =>
+                    {
+                        if (t.Kind != SymbolDisplayPartKind.InterfaceName) return t.ToString();
+                        var typeArguments = ((INamedTypeSymbol)t.Symbol!).TypeArguments;
+                        return typeArguments.Length <= 0 ?
+                                   t.ToString() :
+                                   $"{t.ToString()}<{string.Join(", ", typeArguments.Select(t => t.Name))}>";
+                    }
+                )
+            );
         }
 
         EquatableArray<string> inheritableAttributes = ParseInheritedAttributes(methodSymbol, token);
 
         methodInfo =
-            new MethodInfo(
+            new MethodInfo
+            (
                 methodSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat),
                 methodSyntax.Modifiers.ToString(),
                 methodSymbol.ReturnType.GetFullyQualifiedName(),
@@ -246,22 +335,36 @@ public sealed partial class InteropGenerator {
         return true;
     }
 
-    private static ParameterInfo ParseParameter(IParameterSymbol parameterSymbol, bool isInherited, CancellationToken token) => new(
+    private static ParameterInfo ParseParameter(IParameterSymbol parameterSymbol, bool isInherited, CancellationToken token) => new
+    (
         parameterSymbol.Name,
         parameterSymbol.Type.GetFullyQualifiedName(),
         parameterSymbol.GetDefaultValueString(),
         parameterSymbol.RefKind,
-        isInherited ? ParseInheritedAttributes(parameterSymbol, token) : null);
+        isInherited ?
+            ParseInheritedAttributes(parameterSymbol, token) :
+            null
+    );
 
-    private static void ParseFields(INamedTypeSymbol structSymbol, CancellationToken token, bool isInherited,
-        out EquatableArray<FixedSizeArrayInfo> fixedSizeArrays, out EquatableArray<BitFieldInfo> bitFields, out EquatableArray<FieldInfo> publicFields) {
+    private static void ParseFields
+    (
+        INamedTypeSymbol                       structSymbol,
+        CancellationToken                      token,
+        bool                                   isInherited,
+        out EquatableArray<FixedSizeArrayInfo> fixedSizeArrays,
+        out EquatableArray<BitFieldInfo>       bitFields,
+        out EquatableArray<FieldInfo>          publicFields
+    )
+    {
 
         using ImmutableArrayBuilder<FixedSizeArrayInfo> fixedSizeArrayBuilder = new();
-        using ImmutableArrayBuilder<BitFieldInfo> bitFieldBuilder = new();
-        using ImmutableArrayBuilder<FieldInfo> publicFieldBuilder = new();
+        using ImmutableArrayBuilder<BitFieldInfo>       bitFieldBuilder       = new();
+        using ImmutableArrayBuilder<FieldInfo>          publicFieldBuilder    = new();
 
-        foreach (IFieldSymbol fieldSymbol in structSymbol.GetMembers().OfType<IFieldSymbol>()) {
-            if (fieldSymbol.TryGetAttributeWithFullyQualifiedMetadataName(InteropTypeNames.FixedSizeArrayAttribute, out AttributeData? fixedSizeArrayAttributeData)) {
+        foreach (IFieldSymbol fieldSymbol in structSymbol.GetMembers().OfType<IFieldSymbol>())
+        {
+            if (fieldSymbol.TryGetAttributeWithFullyQualifiedMetadataName(InteropTypeNames.FixedSizeArrayAttribute, out AttributeData? fixedSizeArrayAttributeData))
+            {
                 if (fieldSymbol.Type is not INamedTypeSymbol fieldTypeSymbol)
                     continue;
 
@@ -272,14 +375,15 @@ public sealed partial class InteropGenerator {
                 if (!int.TryParse(fieldTypeSymbol.Name[14..], out int size))
                     continue;
 
-                if (!fixedSizeArrayAttributeData.TryGetConstructorArgument(0, out bool isString) ||
+                if (!fixedSizeArrayAttributeData.TryGetConstructorArgument(0, out bool isString)   ||
                     !fixedSizeArrayAttributeData.TryGetConstructorArgument(1, out bool isBitArray) ||
                     !fixedSizeArrayAttributeData.TryGetConstructorArgument(2, out int bitCount))
                     continue;
 
                 EquatableArray<string> inheritableAttributes = ParseInheritedAttributes(fieldSymbol, token);
 
-                FixedSizeArrayInfo fixedSizeArrayInfo = new(
+                FixedSizeArrayInfo fixedSizeArrayInfo = new
+                (
                     fieldSymbol.Name,
                     fieldTypeSymbol.TypeArguments[0].GetFullyQualifiedName(),
                     size,
@@ -292,7 +396,8 @@ public sealed partial class InteropGenerator {
                 fixedSizeArrayBuilder.Add(fixedSizeArrayInfo);
             }
 
-            foreach (AttributeData attributeData in fieldSymbol.GetAttributes()) {
+            foreach (AttributeData attributeData in fieldSymbol.GetAttributes())
+            {
                 if (attributeData.AttributeClass is not { } attributeSymbol)
                     continue;
 
@@ -300,25 +405,27 @@ public sealed partial class InteropGenerator {
                     continue;
 
                 if (!attributeData.TryGetConstructorArgument(0, out string? name) ||
-                    !attributeData.TryGetConstructorArgument(1, out int index) ||
+                    !attributeData.TryGetConstructorArgument(1, out int index)    ||
                     !attributeData.TryGetConstructorArgument(2, out int length))
                     continue;
 
                 if (attributeSymbol.TypeArguments.Length != 1)
                     continue;
-                Accessibility accessibility = Accessibility.Public;
-                bool isPartial = false;
-                bool hasGetter = true;
-                bool hasSetter = true;
-                bool isReadonlyGetter = true;
-                foreach (IPropertySymbol propertySymbol in structSymbol.GetMembers().OfType<IPropertySymbol>()) {
+                Accessibility accessibility    = Accessibility.Public;
+                bool          isPartial        = false;
+                bool          hasGetter        = true;
+                bool          hasSetter        = true;
+                bool          isReadonlyGetter = true;
+
+                foreach (IPropertySymbol propertySymbol in structSymbol.GetMembers().OfType<IPropertySymbol>())
+                {
                     if (propertySymbol.Name != name)
                         continue;
 
-                    accessibility = propertySymbol.DeclaredAccessibility;
-                    isPartial = propertySymbol.IsPartialDefinition;
-                    hasGetter = propertySymbol.GetMethod != null;
-                    hasSetter = !propertySymbol.IsReadOnly && propertySymbol.SetMethod != null;
+                    accessibility    = propertySymbol.DeclaredAccessibility;
+                    isPartial        = propertySymbol.IsPartialDefinition;
+                    hasGetter        = propertySymbol.GetMethod != null;
+                    hasSetter        = !propertySymbol.IsReadOnly && propertySymbol.SetMethod != null;
                     isReadonlyGetter = propertySymbol.GetMethod?.IsReadOnly ?? false;
 
                     break;
@@ -328,7 +435,8 @@ public sealed partial class InteropGenerator {
 
                 EquatableArray<string> inheritableAttributes = ParseInheritedAttributes(fieldSymbol, token);
 
-                BitFieldInfo bitFieldInfo = new(
+                BitFieldInfo bitFieldInfo = new
+                (
                     fieldSymbol.Name,
                     name!,
                     typeName,
@@ -346,8 +454,10 @@ public sealed partial class InteropGenerator {
                 bitFieldBuilder.Add(bitFieldInfo);
             }
 
-            if (isInherited && fieldSymbol.DeclaredAccessibility == Accessibility.Public) {
-                if (!fieldSymbol.TryGetAttributeWithFullyQualifiedMetadataName("System.Runtime.InteropServices.FieldOffsetAttribute", out AttributeData? fieldOffsetAttributeData))
+            if (isInherited && fieldSymbol.DeclaredAccessibility == Accessibility.Public)
+            {
+                if (!fieldSymbol.TryGetAttributeWithFullyQualifiedMetadataName
+                        ("System.Runtime.InteropServices.FieldOffsetAttribute", out AttributeData? fieldOffsetAttributeData))
                     continue;
 
                 if (!fieldOffsetAttributeData.TryGetConstructorArgument(0, out int fieldOffset))
@@ -355,35 +465,42 @@ public sealed partial class InteropGenerator {
 
                 EquatableArray<string> inheritableAttributes = ParseInheritedAttributes(fieldSymbol, token);
 
-                FieldInfo fieldInfo = new(
+                FieldInfo fieldInfo = new
+                (
                     fieldSymbol.Name,
                     fieldSymbol.Type.GetFullyQualifiedName(),
                     fieldOffset,
                     inheritableAttributes,
-                    fieldSymbol.IsReadOnly);
+                    fieldSymbol.IsReadOnly
+                );
 
                 publicFieldBuilder.Add(fieldInfo);
             }
+
             token.ThrowIfCancellationRequested();
         }
 
         fixedSizeArrays = fixedSizeArrayBuilder.ToImmutable();
-        bitFields = bitFieldBuilder.ToImmutable();
-        publicFields = publicFieldBuilder.ToImmutable();
+        bitFields       = bitFieldBuilder.ToImmutable();
+        publicFields    = publicFieldBuilder.ToImmutable();
     }
 
-    private static void ParseProperties(INamedTypeSymbol structSymbol, CancellationToken token, out EquatableArray<PropertyInfo> publicProperties) {
+    private static void ParseProperties(INamedTypeSymbol structSymbol, CancellationToken token, out EquatableArray<PropertyInfo> publicProperties)
+    {
         using ImmutableArrayBuilder<PropertyInfo> publicPropertiesBuilder = new();
 
-        foreach (IPropertySymbol propertySymbol in structSymbol.GetMembers().OfType<IPropertySymbol>()) {
+        foreach (IPropertySymbol propertySymbol in structSymbol.GetMembers().OfType<IPropertySymbol>())
+        {
             if (propertySymbol.DeclaredAccessibility != Accessibility.Public ||
-                propertySymbol.IsIndexer) {
+                propertySymbol.IsIndexer)
+            {
                 continue;
             }
 
             EquatableArray<string> inheritableAttributes = ParseInheritedAttributes(propertySymbol, token);
 
-            PropertyInfo propertyInfo = new(
+            PropertyInfo propertyInfo = new
+            (
                 propertySymbol.Name,
                 propertySymbol.Type.GetFullyQualifiedName(),
                 propertySymbol.RefKind,
@@ -400,20 +517,26 @@ public sealed partial class InteropGenerator {
         publicProperties = publicPropertiesBuilder.ToImmutable();
     }
 
-    private static void ParseOwnMembers(INamedTypeSymbol structSymbol, EquatableArray<FixedSizeArrayInfo> fixedSizeArrays, CancellationToken token, out EquatableArray<OwnMemberInfo> ownMembers) {
+    private static void ParseOwnMembers
+        (INamedTypeSymbol structSymbol, EquatableArray<FixedSizeArrayInfo> fixedSizeArrays, CancellationToken token, out EquatableArray<OwnMemberInfo> ownMembers)
+    {
         using ImmutableArrayBuilder<OwnMemberInfo> ownMembersBuilder = new();
 
-        foreach (ISymbol memberSymbol in structSymbol.GetMembers()) {
+        foreach (ISymbol memberSymbol in structSymbol.GetMembers())
+        {
             token.ThrowIfCancellationRequested();
 
-            switch (memberSymbol) {
+            switch (memberSymbol)
+            {
                 case IFieldSymbol fieldSymbol:
                     if (fieldSymbol.IsStatic ||
-                        !fieldSymbol.TryGetAttributeWithFullyQualifiedMetadataName("System.Runtime.InteropServices.FieldOffsetAttribute", out AttributeData? fieldOffsetAttributeData) ||
+                        !fieldSymbol.TryGetAttributeWithFullyQualifiedMetadataName
+                            ("System.Runtime.InteropServices.FieldOffsetAttribute", out AttributeData? fieldOffsetAttributeData) ||
                         !fieldOffsetAttributeData.TryGetConstructorArgument(0, out int fieldOffset))
                         continue;
 
-                    ownMembersBuilder.Add(new OwnMemberInfo(fieldSymbol.Name, fieldSymbol.Type.GetNameWithContainingTypeAndNamespace(), fieldOffset, false, string.Empty));
+                    ownMembersBuilder.Add
+                        (new OwnMemberInfo(fieldSymbol.Name, fieldSymbol.Type.GetNameWithContainingTypeAndNamespace(), fieldOffset, false, string.Empty));
 
                     break;
                 case IMethodSymbol methodSymbol:
@@ -427,21 +550,23 @@ public sealed partial class InteropGenerator {
                     if (propertySymbol.IsIndexer)
                         continue;
 
-                    ownMembersBuilder.Add(new OwnMemberInfo(propertySymbol.Name, propertySymbol.Type.GetNameWithContainingTypeAndNamespace(), -1, false, string.Empty));
+                    ownMembersBuilder.Add
+                        (new OwnMemberInfo(propertySymbol.Name, propertySymbol.Type.GetNameWithContainingTypeAndNamespace(), -1, false, string.Empty));
 
                     break;
             }
         }
 
-        if (structSymbol.TryGetAttributeWithFullyQualifiedMetadataName("FFXIVClientStructs.Attributes.AgentAttribute", out _) ||
+        if (structSymbol.TryGetAttributeWithFullyQualifiedMetadataName("FFXIVClientStructs.Attributes.AgentAttribute",     out _) ||
             structSymbol.TryGetAttributeWithFullyQualifiedMetadataName("FFXIVClientStructs.Attributes.InfoProxyAttribute", out _))
             ownMembersBuilder.Add(new OwnMemberInfo("Instance", string.Empty, -1, true, string.Empty));
 
-        foreach (FixedSizeArrayInfo fixedSizeArrayInfo in fixedSizeArrays) {
+        foreach (FixedSizeArrayInfo fixedSizeArrayInfo in fixedSizeArrays)
+        {
             string publicFieldName = fixedSizeArrayInfo.GetPublicFieldName();
 
-            ownMembersBuilder.Add(new OwnMemberInfo(publicFieldName, string.Empty, -1, false, string.Empty));
-            ownMembersBuilder.Add(new OwnMemberInfo(publicFieldName + "String", string.Empty, -1, false, string.Empty));
+            ownMembersBuilder.Add(new OwnMemberInfo(publicFieldName,              string.Empty, -1, false, string.Empty));
+            ownMembersBuilder.Add(new OwnMemberInfo(publicFieldName + "String",   string.Empty, -1, false, string.Empty));
             ownMembersBuilder.Add(new OwnMemberInfo(publicFieldName + "BitArray", string.Empty, -1, false, string.Empty));
         }
 
@@ -451,21 +576,29 @@ public sealed partial class InteropGenerator {
     private static string GetMethodSignature(IMethodSymbol methodSymbol) =>
         string.Join(", ", methodSymbol.Parameters.Select(parameter => parameter.RefKind.GetStringPrefix() + parameter.Type.GetFullyQualifiedName()));
 
-    private static EquatableArray<string> ParseInheritedAttributes(ISymbol symbol, CancellationToken token) {
+    private static EquatableArray<string> ParseInheritedAttributes(ISymbol symbol, CancellationToken token)
+    {
         ImmutableArrayBuilder<string> inheritedAttributes = new();
 
-        foreach (AttributeData attributeData in symbol.GetAttributes()) {
+        foreach (AttributeData attributeData in symbol.GetAttributes())
+        {
             if (attributeData.AttributeClass?.GetFullyQualifiedMetadataName() is not { } attributeName ||
                 InteropTypeNames.UninheritableAttributes.Contains(attributeName))
                 continue;
             if (attributeData.ApplicationSyntaxReference is not { } syntaxReference)
                 continue;
 
-            SyntaxNode originalAttributeSyntax = syntaxReference.GetSyntax(token);
-            AttributeArgumentListSyntax? argumentListSyntax = originalAttributeSyntax.ChildNodes().OfType<AttributeArgumentListSyntax>().FirstOrDefault();
+            SyntaxNode                   originalAttributeSyntax = syntaxReference.GetSyntax(token);
+            AttributeArgumentListSyntax? argumentListSyntax      = originalAttributeSyntax.ChildNodes().OfType<AttributeArgumentListSyntax>().FirstOrDefault();
 
-            inheritedAttributes.Add(argumentListSyntax is not null ? $"[global::{attributeName}{argumentListSyntax.ToString()}]" : $"[global::{attributeName}]");
+            inheritedAttributes.Add
+            (
+                argumentListSyntax is not null ?
+                    $"[global::{attributeName}{argumentListSyntax.ToString()}]" :
+                    $"[global::{attributeName}]"
+            );
         }
+
         return inheritedAttributes.ToImmutable();
     }
 }
