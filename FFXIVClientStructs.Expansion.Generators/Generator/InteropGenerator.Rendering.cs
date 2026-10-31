@@ -238,13 +238,13 @@ public sealed partial class InteropGenerator
 
         if (methodInfo.IsStatic)
         {
-            paramTypesAndNames = methodInfo.GetParameterTypesAndNamesString();
+            paramTypesAndNames = methodInfo.GetParameterTypesAndNamesString(true);
         }
         else
         {
             paramTypesAndNames = $"{structType}* thisPtr";
             if (!methodInfo.Parameters.IsEmpty)
-                paramTypesAndNames += $", {methodInfo.GetParameterTypesAndNamesString()}";
+                paramTypesAndNames += $", {methodInfo.GetParameterTypesAndNamesString(true)}";
         }
 
         var methodModifiers = methodInfo.Modifiers.Replace(" partial", string.Empty).Replace(" static", string.Empty);

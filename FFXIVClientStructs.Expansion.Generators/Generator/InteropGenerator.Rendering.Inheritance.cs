@@ -103,6 +103,13 @@ public sealed partial class InteropGenerator
                     writer.WriteLine($"{inheritedAttribute}");
                 }
 
+                if (field.Type is "bool" or "global::System.Boolean" &&
+                    !field.InheritableAttributes.Any
+                        (attribute => attribute.StartsWith("[global::System.Runtime.InteropServices.MarshalAsAttribute", StringComparison.Ordinal)))
+                {
+                    writer.WriteLine("[global::System.Runtime.InteropServices.MarshalAsAttribute(global::System.Runtime.InteropServices.UnmanagedType.U1)]");
+                }
+
                 writer.WriteLine("[global::System.Runtime.CompilerServices.CompilerGeneratedAttribute]");
                 writer.WriteLine
                 (
