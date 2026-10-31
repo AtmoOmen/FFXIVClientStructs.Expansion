@@ -12,15 +12,10 @@ namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Agent;
 /// </summary>
 [GenerateInterop]
 [Agent(AgentId.CollectablesShop)]
+[Inherits<AgentInterface>]
 [StructLayout(LayoutKind.Explicit, Size = 64)]
 public unsafe partial struct AgentCollectablesShop
 {
-    /// <summary>
-    ///     代理自身的基础接口子对象。
-    /// </summary>
-    [FieldOffset(0)]
-    public AgentInterface AgentInterface;
-
     /// <summary>
     ///     向打开该代理的事件回调接口回传当前选择的事件接口子对象。
     /// </summary>
@@ -57,56 +52,6 @@ public unsafe partial struct AgentCollectablesShop
         "48 8D 05 ?? ?? ?? ?? 48 89 01 48 8D 05 ?? ?? ?? ?? 48 89 41 ?? 48 8D 05 ?? ?? ?? ?? 48 89 41 ?? E9 ?? ?? ?? ?? CC CC CC CC CC CC CC CC CC CC CC 40 53 48 83 EC ?? 32 C0"
     )]
     public partial void Finalizer();
-
-    /// <summary>
-    ///     处理界面发来的事件。
-    /// </summary>
-    /// <param name="returnValue">返回值容器。</param>
-    /// <param name="values">事件参数。</param>
-    /// <param name="valueCount">事件参数数量。</param>
-    /// <param name="eventKind">事件种类。</param>
-    /// <returns>返回值容器。</returns>
-    [VirtualFunction(0)]
-    public partial AtkValue* ReceiveEvent
-    (
-        AtkValue* returnValue,
-        AtkValue* values,
-        uint      valueCount,
-        ulong     eventKind
-    );
-
-    /// <summary>
-    ///     析构代理。
-    /// </summary>
-    /// <param name="freeFlags">释放标志。</param>
-    /// <returns>代理自身。</returns>
-    [VirtualFunction(2)]
-    public partial AgentCollectablesShop* Dtor
-    (
-        byte freeFlags
-    );
-
-    /// <summary>
-    ///     打开采集品交易界面；该代理的显示由 <see cref="Update" /> 延迟完成，此方法不执行任何操作。
-    /// </summary>
-    [VirtualFunction(3)]
-    public partial void Show();
-
-    /// <summary>
-    ///     关闭采集品交易界面并释放采集品交易数据。
-    /// </summary>
-    [VirtualFunction(5)]
-    public partial void Hide();
-
-    /// <summary>
-    ///     每帧推进界面数据刷新状态机，并在界面尚未打开时打开界面。
-    /// </summary>
-    /// <param name="frameCount">当前帧计数。</param>
-    [VirtualFunction(7)]
-    public partial void Update
-    (
-        uint frameCount
-    );
 
     /// <summary>
     ///     提交当前选中的采集品。
