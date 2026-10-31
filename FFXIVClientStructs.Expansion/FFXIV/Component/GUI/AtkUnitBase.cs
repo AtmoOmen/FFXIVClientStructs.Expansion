@@ -11,13 +11,19 @@ public unsafe partial struct AtkUnitBase
 {
     [FieldOffset(0x8), FixedSizeArray(isString: true)]
     internal FixedSizeArray32<byte> NameStorage;
+    
     [FieldOffset(0xE0), FixedSizeArray]
     internal FixedSizeArray2<Pointer<AtkResNode>> AdditionalMoveableNodesStorage;
+    
+    /// <summary>
+    ///     补充窗口范围预筛选的节点，仅检查各节点自身的矩形，不遍历子节点。
+    /// </summary>
     [FieldOffset(0x108), FixedSizeArray]
     internal FixedSizeArray2<Pointer<AtkResNode>> AdditionalFocusableNodesStorage;
 
     [BitField<bool>(nameof(OnlyHideWhenFireCallback), 0)]
-    [FieldOffset(0x1A0)]
+    [BitField<bool>(nameof(IsMoving),                 3)]
+    [FieldOffset(416)]
     public byte Flags1A0;
     [BitField<bool>(nameof(HideAfterReady), 1)]
     [FieldOffset(0x1A1)]
@@ -25,6 +31,22 @@ public unsafe partial struct AtkUnitBase
     [BitField<bool>(nameof(HasChildAddons), 7)]
     [FieldOffset(0x1A2)]
     public byte Flags1A2;
+    [BitField<bool>(nameof(DisableWindowCollisionNodeInteraction), 6)]
+    [FieldOffset(419)]
+    public byte Flags1A3;
+
+    /// <summary>
+    ///     获取界面是否正处于原生移动流程。
+    /// </summary>
+    /// <remarks>
+    ///     移动期间跳过窗口及附加聚焦节点的范围预筛选；结束移动或隐藏界面时由客户端清除。
+    /// </remarks>
+    public partial bool IsMoving { get; }
+
+    /// <summary>
+    ///     禁止窗口碰撞节点接收鼠标输入，仅在命中其以外的交互节点时选中界面。
+    /// </summary>
+    public partial bool DisableWindowCollisionNodeInteraction { get; set; }
 
     [FieldOffset(0x1B8)]
     private byte addonParamUnknown1;
