@@ -16,6 +16,7 @@ public sealed partial class InteropGenerator
     {
         var methods                 = ImmutableArray.CreateBuilder<MethodInfo>();
         var memberFunctionDelegates = ImmutableArray.CreateBuilder<MethodInfo>();
+        var memberFunctionPointers  = ImmutableArray.CreateBuilder<MethodInfo>();
         var virtualFunctions        = ImmutableArray.CreateBuilder<VirtualFunctionInfo>();
         var fields                  = ImmutableArray.CreateBuilder<FieldInfo>();
         var properties              = ImmutableArray.CreateBuilder<PropertyInfo>();
@@ -34,6 +35,20 @@ public sealed partial class InteropGenerator
         var fieldOffsets = definition.GetFields().Select(reader.GetFieldDefinition)
                                      .ToDictionary(field => reader.GetString(field.Name), field => field.GetOffset());
         var virtualOffsets = new Dictionary<string, int>();
+        var memberFunctionPointerNames = new HashSet<string>
+        (
+            symbol.GetTypeMembers("MemberFunctionPointers")
+                  .SelectMany(type => type.GetMembers().OfType<IPropertySymbol>())
+                  .Where
+                  (property => property is
+                      {
+                          DeclaredAccessibility: Accessibility.Public,
+                          IsStatic: true,
+                          Type: IFunctionPointerTypeSymbol
+                      }
+                  )
+                  .Select(property => property.Name)
+        );
         var delegateTypes = symbol.GetTypeMembers("Delegates")
                                   .SelectMany(type => type.GetTypeMembers())
                                   .Where(type => type.TypeKind == TypeKind.Delegate)
@@ -71,6 +86,9 @@ public sealed partial class InteropGenerator
                 ParseMetadataAttributes(method),
                 method.TypeParameters.Select(parameter => parameter.Name).ToImmutableArray()
             );
+
+            if (memberFunctionPointerNames.Contains(method.Name))
+                memberFunctionPointers.Add(methodInfo);
 
             if (!method.IsStatic && virtualOffsets.TryGetValue(method.Name, out var offset))
             {
@@ -151,6 +169,9 @@ public sealed partial class InteropGenerator
             ImmutableArray<OwnMemberInfo>.Empty,
             true,
             new ExtraInheritedStructInfo(fields.ToImmutable(), methods.ToImmutable(), properties.ToImmutable(), memberFunctionDelegates.ToImmutable())
+            {
+                MemberFunctionPointers = memberFunctionPointers.ToImmutable()
+            }
         );
     }
 

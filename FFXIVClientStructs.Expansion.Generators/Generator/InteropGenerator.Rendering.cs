@@ -259,7 +259,7 @@ public sealed partial class InteropGenerator
         IndentedTextWriter writer
     )
     {
-        writer.WriteLine("public unsafe static class MemberFunctionPointers");
+        writer.WriteLine("public unsafe static partial class MemberFunctionPointers");
 
         using (writer.WriteBlock())
         {

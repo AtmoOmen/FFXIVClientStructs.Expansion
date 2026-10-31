@@ -18,7 +18,7 @@ public sealed partial class InteropGenerator
             writer.WriteLine();
         }
 
-        for (int i = structInfo.Hierarchy.Length - 1; i >= 0; i--)
+        for (var i = structInfo.Hierarchy.Length - 1; i >= 0; i--)
         {
             writer.WriteLine($"unsafe partial struct {structInfo.Hierarchy[i]}");
             writer.WriteLine("{");
@@ -45,7 +45,7 @@ public sealed partial class InteropGenerator
 
         ResolveInheritanceOrder(structInfo, string.Empty, 0, 0, 0, inheritedStructs, resolvedInheritanceOrderBuilder, ref hasPrimaryVirtualFunctions);
 
-        ImmutableArray<(StructInfo inheritedStruct, string path, int offset)> resolvedInheritanceOrder = resolvedInheritanceOrderBuilder.ToImmutable();
+        var resolvedInheritanceOrder = resolvedInheritanceOrderBuilder.ToImmutable();
         resolvedInheritanceOrder =
         [
             .. resolvedInheritanceOrder.Where(item => !item.inheritedStruct.IsExternal), .. resolvedInheritanceOrder.Where(item => item.inheritedStruct.IsExternal)
@@ -53,13 +53,13 @@ public sealed partial class InteropGenerator
 
         token.ThrowIfCancellationRequested();
 
-        HashSet<string>                    alreadyWrittenParents = new();
-        HashSet<string>                    alreadyWrittenBases   = new();
-        HashSet<(int Offset, string Name)> writtenFields         = new();
-        HashSet<string>                    writtenMethods        = new();
-        HashSet<string>                    writtenMembers        = new();
+        HashSet<string>                    alreadyWrittenParents = [];
+        HashSet<string>                    alreadyWrittenBases   = [];
+        HashSet<(int Offset, string Name)> writtenFields         = [];
+        HashSet<string>                    writtenMethods        = [];
+        HashSet<string>                    writtenMembers        = [];
 
-        foreach ((StructInfo inheritedStruct, string path, int offset) in resolvedInheritanceOrder)
+        foreach (var (inheritedStruct, path, offset) in resolvedInheritanceOrder)
         {
             if (structInfo.InheritedStructs.Any
                     (inheritanceInfo => inheritanceInfo.InheritedTypeName == inheritedStruct.FullyQualifiedMetadataName) &&
@@ -67,7 +67,7 @@ public sealed partial class InteropGenerator
             {
                 if (!HasOwnParentField(structInfo, inheritedStruct, offset))
                 {
-                    string fieldName = ResolveParentFieldName(structInfo, inheritedStruct, offset);
+                    var fieldName = ResolveParentFieldName(structInfo, inheritedStruct, offset);
                     writer.WriteLine
                     (
                         $"""/// <summary>Inherited parent class accessor for <see cref="{inheritedStruct.FullyQualifiedMetadataName}">{inheritedStruct.Name}</see></summary>"""
@@ -82,23 +82,23 @@ public sealed partial class InteropGenerator
                 alreadyWrittenParents.Add(inheritedStruct.FullyQualifiedMetadataName);
             }
 
-            foreach (FieldInfo field in inheritedStruct.ExtraInheritedStructInfo!.PublicFields)
+            foreach (var field in inheritedStruct.ExtraInheritedStructInfo!.PublicFields)
             {
                 if (HasOwnMemberNameOrOffset(structInfo, field.Name, offset + field.Offset))
                     continue;
                 if (!writtenFields.Add((offset + field.Offset, field.Name)))
                     continue;
 
-                string adjustedFieldName = alreadyWrittenBases.Contains(inheritedStruct.FullyQualifiedMetadataName) ?
-                                               $"{path.Replace(".", "_")}_{field.Name}" :
-                                               field.Name;
+                var adjustedFieldName = alreadyWrittenBases.Contains(inheritedStruct.FullyQualifiedMetadataName) ?
+                                            $"{path.Replace(".", "_")}_{field.Name}" :
+                                            field.Name;
                 writer.WriteLine($"""/// <inheritdoc cref="{inheritedStruct.FullyQualifiedMetadataName}.{field.Name}" />""");
                 writer.WriteLine
                 (
                     $"""/// <remarks>Field inherited from parent class <see cref="{inheritedStruct.FullyQualifiedMetadataName}">{inheritedStruct.Name}</see>.</remarks>"""
                 );
 
-                foreach (string inheritedAttribute in field.InheritableAttributes)
+                foreach (var inheritedAttribute in field.InheritableAttributes)
                 {
                     writer.WriteLine($"{inheritedAttribute}");
                 }
@@ -115,7 +115,7 @@ public sealed partial class InteropGenerator
 
         token.ThrowIfCancellationRequested();
 
-        foreach ((StructInfo inheritedStruct, string path, _) in resolvedInheritanceOrder)
+        foreach (var (inheritedStruct, path, _) in resolvedInheritanceOrder)
         {
             if (!inheritedStruct.MemberFunctions.IsEmpty)
                 RenderInheritedMemberFunctions(structInfo, inheritedStruct, path, writer, writtenMethods);
@@ -124,7 +124,15 @@ public sealed partial class InteropGenerator
         token.ThrowIfCancellationRequested();
         if (hasPrimaryVirtualFunctions)
             RenderInheritedVirtualTable(structInfo, resolvedInheritanceOrder, writer);
-        bool hasInheritedDelegates = resolvedInheritanceOrder.Any
+
+        if (resolvedInheritanceOrder.Any
+            (item => item.offset == 0 &&
+                     (!item.inheritedStruct.MemberFunctions.IsEmpty ||
+                      !(item.inheritedStruct.ExtraInheritedStructInfo?.MemberFunctionPointers.IsEmpty ?? true))
+            ))
+            RenderInheritedMemberFunctionPointers(structInfo, resolvedInheritanceOrder, writer);
+
+        var hasInheritedDelegates = resolvedInheritanceOrder.Any
         (item =>
              item.offset == 0 &&
              (!item.inheritedStruct.MemberFunctions.IsEmpty  ||
@@ -134,7 +142,7 @@ public sealed partial class InteropGenerator
         if (hasInheritedDelegates)
             RenderInheritedDelegateTypes(structInfo, resolvedInheritanceOrder, writer);
 
-        foreach ((StructInfo inheritedStruct, string path, int offset) in resolvedInheritanceOrder)
+        foreach (var (inheritedStruct, path, offset) in resolvedInheritanceOrder)
         {
             if (!inheritedStruct.VirtualFunctions.IsEmpty)
                 RenderInheritedVirtualFunctions(structInfo, inheritedStruct, path, offset, writer, writtenMethods);
@@ -142,7 +150,7 @@ public sealed partial class InteropGenerator
 
         token.ThrowIfCancellationRequested();
 
-        foreach ((StructInfo inheritedStruct, string path, _) in resolvedInheritanceOrder)
+        foreach (var (inheritedStruct, path, _) in resolvedInheritanceOrder)
         {
             if (!inheritedStruct.ExtraInheritedStructInfo!.PublicMethods.IsEmpty)
                 RenderInheritedPublicMethods(structInfo, inheritedStruct, path, writer, writtenMethods);
@@ -150,7 +158,7 @@ public sealed partial class InteropGenerator
 
         token.ThrowIfCancellationRequested();
 
-        foreach ((StructInfo inheritedStruct, string path, _) in resolvedInheritanceOrder)
+        foreach (var (inheritedStruct, path, _) in resolvedInheritanceOrder)
         {
             if (!inheritedStruct.ExtraInheritedStructInfo!.PublicProperties.IsEmpty)
                 RenderInheritedPublicProperties(structInfo, inheritedStruct, path, writer, writtenMembers);
@@ -158,7 +166,7 @@ public sealed partial class InteropGenerator
 
         token.ThrowIfCancellationRequested();
 
-        foreach ((StructInfo inheritedStruct, string path, _) in resolvedInheritanceOrder)
+        foreach (var (inheritedStruct, path, _) in resolvedInheritanceOrder)
         {
             if (!inheritedStruct.BitFields.IsEmpty)
                 RenderInheritedBitFieldProperties(structInfo, inheritedStruct, path, writer, writtenMembers);
@@ -166,7 +174,7 @@ public sealed partial class InteropGenerator
 
         token.ThrowIfCancellationRequested();
 
-        foreach ((StructInfo inheritedStruct, _, _) in resolvedInheritanceOrder)
+        foreach (var (inheritedStruct, _, _) in resolvedInheritanceOrder)
         {
             if (!inheritedStruct.StringOverloads.IsEmpty)
                 RenderStringOverloads(inheritedStruct, writer);
@@ -174,7 +182,7 @@ public sealed partial class InteropGenerator
 
         token.ThrowIfCancellationRequested();
 
-        foreach ((StructInfo inheritedStruct, string path, _) in resolvedInheritanceOrder)
+        foreach (var (inheritedStruct, path, _) in resolvedInheritanceOrder)
         {
             if (!inheritedStruct.FixedSizeArrays.IsEmpty)
                 RenderInheritedFixedSizeArrayAccessors(structInfo, inheritedStruct, path, writer);
@@ -197,7 +205,7 @@ public sealed partial class InteropGenerator
     {
         var processed = 0;
 
-        foreach (InheritanceInfo inheritanceInfo in structInfo.InheritedStructs)
+        foreach (var inheritanceInfo in structInfo.InheritedStructs)
         {
             if (index >= inheritedStructs.Length)
             {
@@ -207,11 +215,11 @@ public sealed partial class InteropGenerator
             if (inheritanceInfo.ParentOffset != 0)
                 absoluteOffset = curParentOffset + inheritanceInfo.ParentOffset;
 
-            StructInfo currentStruct = inheritedStructs[index + processed];
-            string     baseName      = ResolveParentFieldName(structInfo, currentStruct, absoluteOffset);
-            string newPath = path == string.Empty ?
-                                 baseName :
-                                 path + "." + baseName;
+            var currentStruct = inheritedStructs[index + processed];
+            var baseName      = ResolveParentFieldName(structInfo, currentStruct, absoluteOffset);
+            var newPath = path == string.Empty ?
+                              baseName :
+                              path + "." + baseName;
 
             processed += 1;
 
@@ -240,15 +248,14 @@ public sealed partial class InteropGenerator
     private static void RenderInheritedMemberFunctions
         (StructInfo structInfo, StructInfo inheritedStruct, string path, IndentedTextWriter writer, HashSet<string> writtenMethods)
     {
-        foreach (MemberFunctionInfo memberFunctionInfo in inheritedStruct.MemberFunctions)
+        foreach (var (methodInfo, _) in inheritedStruct.MemberFunctions)
         {
-            if (memberFunctionInfo.MethodInfo.Name == "Ctor")
+            if (methodInfo.Name == "Ctor")
                 continue;
-            if (HasOwnMethod(structInfo, memberFunctionInfo.MethodInfo))
+            if (HasOwnMethod(structInfo, methodInfo))
                 continue;
-            if (!writtenMethods.Add(GetMethodKey(memberFunctionInfo.MethodInfo)))
+            if (!writtenMethods.Add(GetMethodKey(methodInfo)))
                 continue;
-            MethodInfo methodInfo = memberFunctionInfo.MethodInfo;
             writer.WriteLine
                 ($"""/// <inheritdoc cref="{inheritedStruct.FullyQualifiedMetadataName}.{methodInfo.Name}({methodInfo.GetParameterTypeStringForCref()})" />""");
             writer.WriteLine
@@ -258,7 +265,7 @@ public sealed partial class InteropGenerator
             writer.WriteLine
                 ("[global::System.Runtime.CompilerServices.MethodImplAttribute(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]");
 
-            foreach (string inheritedAttribute in methodInfo.InheritableAttributes)
+            foreach (var inheritedAttribute in methodInfo.InheritableAttributes)
             {
                 writer.WriteLine(inheritedAttribute);
             }
@@ -287,16 +294,16 @@ public sealed partial class InteropGenerator
 
         using (writer.WriteBlock())
         {
-            foreach ((StructInfo inheritedStruct, _, int offset) in resolvedInheritanceOrder)
+            foreach (var (inheritedStruct, _, offset) in resolvedInheritanceOrder)
             {
                 if (offset != 0)
                     continue;
 
-                foreach (VirtualFunctionInfo virtualFunctionInfo in inheritedStruct.VirtualFunctions)
+                foreach (var virtualFunctionInfo in inheritedStruct.VirtualFunctions)
                 {
                     var functionPointerType =
                         $"delegate* unmanaged <{structInfo.Name}*, {virtualFunctionInfo.MethodInfo.GetParameterTypeStringWithTrailingTypeNoGenerics()}{virtualFunctionInfo.MethodInfo.ReturnTypeOrVoid}>";
-                    foreach (string inheritedAttribute in virtualFunctionInfo.MethodInfo.InheritableAttributes)
+                    foreach (var inheritedAttribute in virtualFunctionInfo.MethodInfo.InheritableAttributes)
                         writer.WriteLine(inheritedAttribute);
                     writer.WriteLine
                     (
@@ -313,21 +320,70 @@ public sealed partial class InteropGenerator
         }
     }
 
+    private static void RenderInheritedMemberFunctionPointers
+    (
+        StructInfo                                                            structInfo,
+        ImmutableArray<(StructInfo inheritedStruct, string path, int offset)> resolvedInheritanceOrder,
+        IndentedTextWriter                                                    writer
+    )
+    {
+        HashSet<string> writtenPointers =
+        [
+            .. structInfo.MemberFunctions.Select(function => function.MethodInfo.NameNonGeneric)
+        ];
+
+        writer.WriteLine("public unsafe static partial class MemberFunctionPointers");
+
+        using (writer.WriteBlock())
+        {
+            foreach (var (inheritedStruct, _, offset) in resolvedInheritanceOrder)
+            {
+                if (offset != 0)
+                    continue;
+
+                var methods = inheritedStruct.MemberFunctions.Select(function => function.MethodInfo)
+                                             .Concat(inheritedStruct.ExtraInheritedStructInfo?.MemberFunctionPointers ?? ImmutableArray<MethodInfo>.Empty);
+
+                foreach (var methodInfo in methods)
+                {
+                    if (methodInfo.Name == "Ctor"            ||
+                        HasOwnMethod(structInfo, methodInfo) ||
+                        !writtenPointers.Add(methodInfo.NameNonGeneric))
+                        continue;
+
+                    var thisPtrType = methodInfo.IsStatic ?
+                                          string.Empty :
+                                          $"{structInfo.Name}*, ";
+                    var functionPointerType =
+                        $"delegate* unmanaged <{thisPtrType}{methodInfo.GetParameterTypeStringWithTrailingTypeNoGenerics()}{methodInfo.ReturnTypeOrVoid}>";
+
+                    foreach (var inheritedAttribute in methodInfo.InheritableAttributes)
+                        writer.WriteLine(inheritedAttribute);
+
+                    writer.WriteLine
+                    (
+                        $"public static {functionPointerType} {methodInfo.NameNonGeneric} => ({functionPointerType}){inheritedStruct.FullyQualifiedMetadataName}.MemberFunctionPointers.{methodInfo.NameNonGeneric};"
+                    );
+                }
+            }
+        }
+    }
+
     private static void RenderInheritedDelegateTypes
         (StructInfo structInfo, ImmutableArray<(StructInfo inheritedStruct, string path, int offset)> resolvedInheritanceOrder, IndentedTextWriter writer)
     {
-        HashSet<(string Name, int Arity)> writtenDelegates = new
-        (
-            structInfo.MemberFunctions.Select(function => function.MethodInfo)
-                      .Concat(structInfo.VirtualFunctions.Select(function => function.MethodInfo))
-                      .Select(method => (method.NameNonGeneric, method.TypeArguments.Length))
-        );
+        HashSet<(string Name, int Arity)> writtenDelegates =
+        [
+            .. structInfo.MemberFunctions.Select(function => function.MethodInfo)
+                         .Concat(structInfo.VirtualFunctions.Select(function => function.MethodInfo))
+                         .Select(method => (method.NameNonGeneric, method.TypeArguments.Length))
+        ];
 
         writer.WriteLine("public static partial class Delegates");
 
         using (writer.WriteBlock())
         {
-            foreach ((StructInfo inheritedStruct, _, int offset) in resolvedInheritanceOrder)
+            foreach (var (inheritedStruct, _, offset) in resolvedInheritanceOrder)
             {
                 if (offset != 0)
                     continue;
@@ -350,9 +406,8 @@ public sealed partial class InteropGenerator
     private static void RenderInheritedVirtualFunctions
         (StructInfo structInfo, StructInfo inheritedStruct, string path, int offset, IndentedTextWriter writer, HashSet<string> writtenMethods)
     {
-        foreach (VirtualFunctionInfo virtualFunctionInfo in inheritedStruct.VirtualFunctions)
+        foreach (var (methodInfo, _) in inheritedStruct.VirtualFunctions)
         {
-            MethodInfo methodInfo = virtualFunctionInfo.MethodInfo;
             if (offset != 0 && methodInfo.Name == "Dtor") continue;
             if (HasOwnMethod(structInfo, methodInfo))
                 continue;
@@ -369,7 +424,7 @@ public sealed partial class InteropGenerator
             writer.WriteLine
                 ("[global::System.Runtime.CompilerServices.MethodImplAttribute(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]");
 
-            foreach (string inheritedAttribute in methodInfo.InheritableAttributes)
+            foreach (var inheritedAttribute in methodInfo.InheritableAttributes)
             {
                 writer.WriteLine(inheritedAttribute);
             }
@@ -381,7 +436,7 @@ public sealed partial class InteropGenerator
                     paramNames = ", " + methodInfo.GetParameterNamesString();
                 writer.WriteLine
                 (
-                    $"{methodInfo.GetDeclarationStringWithoutPartial()} => {virtualFunctionInfo.MethodInfo.ReturnTypeCast}VirtualTable->{methodInfo.NameNonGeneric}(({structInfo.Name}*)global::System.Runtime.CompilerServices.Unsafe.AsPointer(ref this){paramNames});"
+                    $"{methodInfo.GetDeclarationStringWithoutPartial()} => {methodInfo.ReturnTypeCast}VirtualTable->{methodInfo.NameNonGeneric}(({structInfo.Name}*)global::System.Runtime.CompilerServices.Unsafe.AsPointer(ref this){paramNames});"
                 );
             }
             else
@@ -394,7 +449,7 @@ public sealed partial class InteropGenerator
     private static void RenderInheritedPublicMethods
         (StructInfo structInfo, StructInfo inheritedStruct, string path, IndentedTextWriter writer, HashSet<string> writtenMethods)
     {
-        foreach (MethodInfo methodInfo in inheritedStruct.ExtraInheritedStructInfo!.PublicMethods)
+        foreach (var methodInfo in inheritedStruct.ExtraInheritedStructInfo!.PublicMethods)
         {
             if (methodInfo.Name == "Ctor")
                 continue;
@@ -413,7 +468,7 @@ public sealed partial class InteropGenerator
             writer.WriteLine
                 ("[global::System.Runtime.CompilerServices.MethodImplAttribute(global::System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]");
 
-            foreach (string inheritedAttribute in methodInfo.InheritableAttributes)
+            foreach (var inheritedAttribute in methodInfo.InheritableAttributes)
             {
                 writer.WriteLine(inheritedAttribute);
             }
@@ -436,7 +491,7 @@ public sealed partial class InteropGenerator
     private static void RenderInheritedPublicProperties
         (StructInfo structInfo, StructInfo inheritedStruct, string path, IndentedTextWriter writer, HashSet<string> writtenMembers)
     {
-        foreach (PropertyInfo propertyInfo in inheritedStruct.ExtraInheritedStructInfo!.PublicProperties)
+        foreach (var propertyInfo in inheritedStruct.ExtraInheritedStructInfo!.PublicProperties)
         {
             if (HasOwnMemberName(structInfo, propertyInfo.Name))
                 continue;
@@ -448,7 +503,7 @@ public sealed partial class InteropGenerator
                 $"""/// <remarks>Property inherited from parent class <see cref="{inheritedStruct.FullyQualifiedMetadataName}">{inheritedStruct.Name}</see>.</remarks>"""
             );
 
-            foreach (string inheritedAttribute in propertyInfo.InheritableAttributes)
+            foreach (var inheritedAttribute in propertyInfo.InheritableAttributes)
             {
                 writer.WriteLine(inheritedAttribute);
             }
@@ -473,7 +528,7 @@ public sealed partial class InteropGenerator
     private static void RenderInheritedBitFieldProperties
         (StructInfo structInfo, StructInfo inheritedStruct, string path, IndentedTextWriter writer, HashSet<string> writtenMembers)
     {
-        foreach (BitFieldInfo bitFieldInfo in inheritedStruct.BitFields)
+        foreach (var bitFieldInfo in inheritedStruct.BitFields)
         {
             if (bitFieldInfo.IsPartial)
                 continue;
@@ -488,7 +543,7 @@ public sealed partial class InteropGenerator
                 $"""/// <remarks>Property inherited from parent class <see cref="{inheritedStruct.FullyQualifiedMetadataName}">{inheritedStruct.Name}</see>.</remarks>"""
             );
 
-            foreach (string inheritedAttribute in bitFieldInfo.InheritableAttributes)
+            foreach (var inheritedAttribute in bitFieldInfo.InheritableAttributes)
             {
                 writer.WriteLine(inheritedAttribute);
             }
@@ -512,7 +567,7 @@ public sealed partial class InteropGenerator
 
     private static void RenderInheritedFixedSizeArrayAccessors(StructInfo structInfo, StructInfo inheritedStruct, string path, IndentedTextWriter writer)
     {
-        foreach (FixedSizeArrayInfo fixedSizeArrayInfo in inheritedStruct.FixedSizeArrays)
+        foreach (var fixedSizeArrayInfo in inheritedStruct.FixedSizeArrays)
         {
             if (HasOwnMemberName(structInfo, fixedSizeArrayInfo.GetPublicFieldName()))
                 continue;
@@ -524,7 +579,7 @@ public sealed partial class InteropGenerator
                 $"""/// <remarks>Field inherited from parent class <see cref="{inheritedStruct.FullyQualifiedMetadataName}">{inheritedStruct.Name}</see>.</remarks>"""
             );
 
-            foreach (string inheritedAttribute in fixedSizeArrayInfo.InheritableAttributes)
+            foreach (var inheritedAttribute in fixedSizeArrayInfo.InheritableAttributes)
             {
                 writer.WriteLine(inheritedAttribute);
             }
@@ -542,7 +597,7 @@ public sealed partial class InteropGenerator
                     $"""/// <remarks>Field inherited from parent class <see cref="{inheritedStruct.FullyQualifiedMetadataName}">{inheritedStruct.Name}</see>.</remarks>"""
                 );
 
-                foreach (string inheritedAttribute in fixedSizeArrayInfo.InheritableAttributes)
+                foreach (var inheritedAttribute in fixedSizeArrayInfo.InheritableAttributes)
                 {
                     writer.WriteLine(inheritedAttribute);
                 }
@@ -551,51 +606,58 @@ public sealed partial class InteropGenerator
 
                 using (writer.WriteBlock())
                 {
-                    if (fixedSizeArrayInfo.Type == "byte")
+                    switch (fixedSizeArrayInfo.Type)
                     {
-                        writer.WriteLine
-                        (
-                            $"get => global::System.Text.Encoding.UTF8.GetString(global::System.Runtime.InteropServices.MemoryMarshal.CreateReadOnlySpanFromNullTerminated((byte*)global::System.Runtime.CompilerServices.Unsafe.AsPointer(ref {path}.{fixedSizeArrayInfo.FieldName}[0])));"
-                        );
-                        writer.WriteLine("set");
-
-                        using (writer.WriteBlock())
+                        case "byte":
                         {
-                            writer.WriteLine($"if (global::System.Text.Encoding.UTF8.GetByteCount(value) > {fixedSizeArrayInfo.Size} - 1)");
+                            writer.WriteLine
+                            (
+                                $"get => global::System.Text.Encoding.UTF8.GetString(global::System.Runtime.InteropServices.MemoryMarshal.CreateReadOnlySpanFromNullTerminated((byte*)global::System.Runtime.CompilerServices.Unsafe.AsPointer(ref {path}.{fixedSizeArrayInfo.FieldName}[0])));"
+                            );
+                            writer.WriteLine("set");
 
                             using (writer.WriteBlock())
                             {
-                                writer.WriteLine
-                                (
-                                    $"""InteropGenerator.Runtime.ThrowHelper.ThrowStringSizeTooLarge("{fixedSizeArrayInfo.GetPublicFieldName()}String", {fixedSizeArrayInfo.Size});"""
-                                );
+                                writer.WriteLine($"if (global::System.Text.Encoding.UTF8.GetByteCount(value) > {fixedSizeArrayInfo.Size} - 1)");
+
+                                using (writer.WriteBlock())
+                                {
+                                    writer.WriteLine
+                                    (
+                                        $"""InteropGenerator.Runtime.ThrowHelper.ThrowStringSizeTooLarge("{fixedSizeArrayInfo.GetPublicFieldName()}String", {fixedSizeArrayInfo.Size});"""
+                                    );
+                                }
+
+                                writer.WriteLine($"global::System.Text.Encoding.UTF8.GetBytes(value.AsSpan(), {path}.{fixedSizeArrayInfo.FieldName});");
+                                writer.WriteLine($"{path}.{fixedSizeArrayInfo.FieldName}[{fixedSizeArrayInfo.Size - 1}] = 0;");
                             }
-
-                            writer.WriteLine($"global::System.Text.Encoding.UTF8.GetBytes(value.AsSpan(), {path}.{fixedSizeArrayInfo.FieldName});");
-                            writer.WriteLine($"{path}.{fixedSizeArrayInfo.FieldName}[{fixedSizeArrayInfo.Size - 1}] = 0;");
                         }
-                    }
-                    else if (fixedSizeArrayInfo.Type == "char")
-                    {
-                        writer.WriteLine
-                            ($"get => new string((char*)global::System.Runtime.CompilerServices.Unsafe.AsPointer(ref {path}.{fixedSizeArrayInfo.FieldName}[0]));");
-                        writer.WriteLine("set");
-
-                        using (writer.WriteBlock())
+                            break;
+                        case "char":
                         {
-                            writer.WriteLine($"if (value.Length > {fixedSizeArrayInfo.Size} - 1)");
+                            writer.WriteLine
+                            (
+                                $"get => new string((char*)global::System.Runtime.CompilerServices.Unsafe.AsPointer(ref {path}.{fixedSizeArrayInfo.FieldName}[0]));"
+                            );
+                            writer.WriteLine("set");
 
                             using (writer.WriteBlock())
                             {
-                                writer.WriteLine
-                                (
-                                    $"""InteropGenerator.Runtime.ThrowHelper.ThrowStringSizeTooLarge("{fixedSizeArrayInfo.GetPublicFieldName()}String", {fixedSizeArrayInfo.Size});"""
-                                );
-                            }
+                                writer.WriteLine($"if (value.Length > {fixedSizeArrayInfo.Size} - 1)");
 
-                            writer.WriteLine($"value.CopyTo({path}.{fixedSizeArrayInfo.FieldName});");
-                            writer.WriteLine($"{path}.{fixedSizeArrayInfo.FieldName}[{fixedSizeArrayInfo.Size - 1}] = '\\0';");
+                                using (writer.WriteBlock())
+                                {
+                                    writer.WriteLine
+                                    (
+                                        $"""InteropGenerator.Runtime.ThrowHelper.ThrowStringSizeTooLarge("{fixedSizeArrayInfo.GetPublicFieldName()}String", {fixedSizeArrayInfo.Size});"""
+                                    );
+                                }
+
+                                writer.WriteLine($"value.CopyTo({path}.{fixedSizeArrayInfo.FieldName});");
+                                writer.WriteLine($"{path}.{fixedSizeArrayInfo.FieldName}[{fixedSizeArrayInfo.Size - 1}] = '\\0';");
+                            }
                         }
+                            break;
                     }
                 }
             }
@@ -608,7 +670,7 @@ public sealed partial class InteropGenerator
                     $"""/// <remarks>Field inherited from parent class <see cref="{inheritedStruct.FullyQualifiedMetadataName}">{inheritedStruct.Name}</see>.</remarks>"""
                 );
 
-                foreach (string inheritedAttribute in fixedSizeArrayInfo.InheritableAttributes)
+                foreach (var inheritedAttribute in fixedSizeArrayInfo.InheritableAttributes)
                 {
                     writer.WriteLine(inheritedAttribute);
                 }
@@ -620,7 +682,7 @@ public sealed partial class InteropGenerator
 
     private static string ResolveParentFieldName(StructInfo structInfo, StructInfo inheritedStruct, int offset)
     {
-        foreach (OwnMemberInfo ownMember in structInfo.OwnMembers)
+        foreach (var ownMember in structInfo.OwnMembers)
         {
             if (!ownMember.IsMethod             &&
                 ownMember.FieldOffset == offset &&
@@ -651,7 +713,7 @@ public sealed partial class InteropGenerator
 
     private static bool HasOwnMethod(StructInfo structInfo, MethodInfo methodInfo)
     {
-        string parameterSignature = GetParameterSignature(methodInfo);
+        var parameterSignature = GetParameterSignature(methodInfo);
 
         return structInfo.OwnMembers.Any
         (ownMember => ownMember.IsMethod                           &&
