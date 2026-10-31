@@ -1,4 +1,5 @@
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using NativeAgentMap = FFXIVClientStructs.FFXIV.Client.UI.Agent.AgentMap;
 
 namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Agent;
@@ -9,7 +10,7 @@ namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Agent;
 [Agent(AgentId.Map)]
 [GenerateInterop]
 [Inherits<NativeAgentMap>]
-[StructLayout(LayoutKind.Explicit, Size = 0x144E8)]
+[StructLayout(LayoutKind.Explicit, Size = 83176)]
 public unsafe partial struct AgentMap
 {
     /// <summary>
@@ -18,4 +19,12 @@ public unsafe partial struct AgentMap
     /// </summary>
     [FieldOffset(23248), FixedSizeArray]
     internal FixedSizeArray20<ushort> PriorityMarkerIndicesStorage;
+
+    [MemberFunction("44 88 4C 24 ?? 44 88 44 24 ?? 53 41 55 41 56")]
+    public partial uint BuildMapMarkers
+    (
+        ExtendArrayData* array,
+        bool             omitAetherytes,
+        bool             onlyAetherytes
+    );
 }
