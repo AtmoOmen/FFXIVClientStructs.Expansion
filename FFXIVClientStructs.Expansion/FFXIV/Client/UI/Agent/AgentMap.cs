@@ -1,5 +1,6 @@
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using FFXIVClientStructs.STD;
 using NativeAgentMap = FFXIVClientStructs.FFXIV.Client.UI.Agent.AgentMap;
 
 namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Agent;
@@ -13,37 +14,17 @@ namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Agent;
 [StructLayout(LayoutKind.Explicit, Size = 83176)]
 public unsafe partial struct AgentMap
 {
-    /// <summary>大区候选列表的起点，由游戏管理其内存。</summary>
+    /// <summary>大区候选列表，由游戏管理其内存。</summary>
     [FieldOffset(40)]
-    public RegionSelectionEntry* RegionSelectionBegin;
+    public StdVector<RegionSelectionEntry> RegionSelection;
 
-    /// <summary>大区候选列表的末尾。</summary>
-    [FieldOffset(48)]
-    public RegionSelectionEntry* RegionSelectionEnd;
-
-    /// <summary>大区候选列表的容量末尾。</summary>
-    [FieldOffset(56)]
-    public RegionSelectionEntry* RegionSelectionCapacity;
-
-    /// <summary>区域候选列表的起点，由游戏管理其内存。</summary>
+    /// <summary>区域候选列表，由游戏管理其内存。</summary>
     [FieldOffset(88)]
-    public TerritorySelectionEntry* TerritorySelectionBegin;
+    public StdVector<TerritorySelectionEntry> TerritorySelection;
 
-    /// <summary>区域候选列表的末尾。</summary>
-    [FieldOffset(96)]
-    public TerritorySelectionEntry* TerritorySelectionEnd;
-
-    /// <summary>区域候选列表的容量末尾。</summary>
-    [FieldOffset(104)]
-    public TerritorySelectionEntry* TerritorySelectionCapacity;
-
-    /// <summary>原生地图切换列表的起点。</summary>
+    /// <summary>原生地图切换候选列表，由游戏管理其内存。</summary>
     [FieldOffset(112)]
-    public LayerSelectionEntry* LayerSelectionBegin;
-
-    /// <summary>原生地图切换列表的末尾。</summary>
-    [FieldOffset(120)]
-    public LayerSelectionEntry* LayerSelectionEnd;
+    public StdVector<LayerSelectionEntry> LayerSelection;
 
     /// <summary>当前选中地图的类型。</summary>
     [FieldOffset(23128)]
