@@ -1,4 +1,5 @@
 using FFXIVClientStructs.STD;
+using FFXIVClientStructs.Expansion.FFXIV.Client.Network.Socket;
 
 namespace FFXIVClientStructs.Expansion.FFXIV.Application.Network;
 
@@ -45,5 +46,22 @@ public unsafe partial struct RaptureChannelManager
 
     [GenerateInterop]
     [StructLayout(LayoutKind.Explicit, Size = 0x270)]
-    public partial struct ServiceConsumerConnectionManager;
+    public unsafe partial struct ServiceConsumerConnectionManager
+    {
+        /// <summary>
+        ///     当前区域服务器连接。
+        /// </summary>
+        [FieldOffset(376)]
+        public ConsumerConnection* Connection;
+
+        [StructLayout(LayoutKind.Explicit, Size = 53592)]
+        public struct ConsumerConnection
+        {
+            /// <summary>
+            ///     区域连接使用的 TCP 套接字实现。
+            /// </summary>
+            [FieldOffset(32944)]
+            public SocketImpl* TCPSocket;
+        }
+    }
 }
