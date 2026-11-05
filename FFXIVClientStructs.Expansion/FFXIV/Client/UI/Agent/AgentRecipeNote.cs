@@ -416,10 +416,21 @@ public unsafe partial struct AgentRecipeNote
     /// </summary>
     /// <param name="eventKind">触发刷新的原因：0 表示收藏列表变化，1 表示界面重建，3 与 6 表示重绘，5 表示切换分类，7 表示重算可制作数量。</param>
     [MemberFunction("48 89 5C 24 ?? 57 41 55 41 57")]
-    public partial void RefreshAddon
+    private static partial void RefreshAddonInternal
     (
-        int eventKind
+        GameEventCallback* callback,
+        int                eventKind
     );
+
+    /// <summary>
+    ///     通过位于代理偏移 40 的游戏事件回调子对象刷新制作笔记界面。
+    /// </summary>
+    /// <param name="eventKind">刷新原因：0 表示收藏列表变化，1 表示界面重建，3 与 6 表示重绘，5 表示切换分类，7 表示重算可制作数量。</param>
+    public void RefreshAddon(int eventKind)
+    {
+        fixed (GameEventCallback* callback = &GameEventCallback)
+            RefreshAddonInternal(callback, eventKind);
+    }
 
     /// <summary>
     ///     按内部配方行 id 打开配方；内部 id 为配方行 id 加上 0x10000。
@@ -605,8 +616,9 @@ public unsafe partial struct AgentRecipeNote
     /// <summary>
     ///     重建当前可见的配方列表，计算分页文本并刷新列表项。
     /// </summary>
+    /// <returns>界面数组不可用时返回 0，成功刷新时返回配方列表更新位掩码 2。</returns>
     [MemberFunction("40 53 41 55 41 57 48 81 EC ?? ?? ?? ?? 48 8B D9")]
-    public partial void RefreshRecipeList();
+    public partial int RefreshRecipeList();
 
     /// <summary>
     ///     刷新选中配方的详情面板，包含材料、耐久、难度与品质等信息。
@@ -1296,7 +1308,7 @@ public unsafe partial struct AgentRecipeNote
         [FieldOffset(4)]
         public ushort RecipeID;
     }
-    
+
     /// <summary>
     ///     按物品名称检索配方时使用的 RecipeLookup 表等待器。
     /// </summary>
