@@ -7,7 +7,14 @@ namespace FFXIVClientStructs.Expansion.Generators.Generator;
 
 public sealed partial class InteropGenerator
 {
-    private static string RenderInheritedStructInfo(StructInfo structInfo, ImmutableArray<StructInfo> inheritedStructs, CancellationToken token)
+    private static string RenderInheritedStructInfo
+    (
+        StructInfo                 structInfo,
+        ImmutableArray<StructInfo> inheritedStructs,
+        string                     generatorNamespace,
+        Dictionary<string, string> sharedPointerBases,
+        CancellationToken          token
+    )
     {
         using IndentedTextWriter writer = new();
         writer.WriteLine("");
@@ -26,7 +33,7 @@ public sealed partial class InteropGenerator
         }
 
         if (inheritedStructs.Any())
-            RenderInheritance(structInfo, inheritedStructs, token, writer);
+            RenderInheritance(structInfo, inheritedStructs, generatorNamespace, sharedPointerBases, token, writer);
 
         for (var i = 0; i < structInfo.Hierarchy.Length; i++)
         {
@@ -37,7 +44,15 @@ public sealed partial class InteropGenerator
         return writer.ToString();
     }
 
-    private static void RenderInheritance(StructInfo structInfo, ImmutableArray<StructInfo> inheritedStructs, CancellationToken token, IndentedTextWriter writer)
+    private static void RenderInheritance
+    (
+        StructInfo                 structInfo,
+        ImmutableArray<StructInfo> inheritedStructs,
+        string                     generatorNamespace,
+        Dictionary<string, string> sharedPointerBases,
+        CancellationToken          token,
+        IndentedTextWriter         writer
+    )
     {
         using ImmutableArrayBuilder<(StructInfo inheritedStruct, string path, int offset)> resolvedInheritanceOrderBuilder = new();
 
@@ -137,7 +152,7 @@ public sealed partial class InteropGenerator
                      (!item.inheritedStruct.MemberFunctions.IsEmpty ||
                       !(item.inheritedStruct.ExtraInheritedStructInfo?.MemberFunctionPointers.IsEmpty ?? true))
             ))
-            RenderInheritedMemberFunctionPointers(structInfo, resolvedInheritanceOrder, writer);
+            RenderInheritedMemberFunctionPointers(structInfo, resolvedInheritanceOrder, generatorNamespace, sharedPointerBases, writer);
 
         var hasInheritedDelegates = resolvedInheritanceOrder.Any
         (item =>
@@ -331,6 +346,8 @@ public sealed partial class InteropGenerator
     (
         StructInfo                                                            structInfo,
         ImmutableArray<(StructInfo inheritedStruct, string path, int offset)> resolvedInheritanceOrder,
+        string                                                                generatorNamespace,
+        Dictionary<string, string>                                            sharedPointerBases,
         IndentedTextWriter                                                    writer
     )
     {
@@ -339,41 +356,87 @@ public sealed partial class InteropGenerator
             .. structInfo.MemberFunctions.Select(function => function.MethodInfo.NameNonGeneric)
         ];
 
-        writer.WriteLine("public unsafe static partial class MemberFunctionPointers");
+        using IndentedTextWriter members = new();
+
+        foreach (var (inheritedStruct, _, offset) in resolvedInheritanceOrder)
+        {
+            if (offset != 0)
+                continue;
+
+            var methods = inheritedStruct.MemberFunctions.Select(function => function.MethodInfo)
+                                         .Concat(inheritedStruct.ExtraInheritedStructInfo?.MemberFunctionPointers ?? ImmutableArray<MethodInfo>.Empty);
+
+            foreach (var methodInfo in methods)
+            {
+                if (methodInfo.Name == "Ctor"            ||
+                    HasOwnMethod(structInfo, methodInfo) ||
+                    !writtenPointers.Add(methodInfo.NameNonGeneric))
+                    continue;
+
+                var thisPtrType = methodInfo.IsStatic ?
+                                      string.Empty :
+                                      "TSelf*, ";
+                var functionPointerType =
+                    $"delegate* unmanaged <{thisPtrType}{methodInfo.GetParameterTypeStringWithTrailingTypeNoGenerics()}{methodInfo.ReturnTypeOrVoid}>";
+
+                members.WriteLine($"/// <inheritdoc cref=\"{inheritedStruct.FullyQualifiedMetadataName}.MemberFunctionPointers.{methodInfo.NameNonGeneric}\" />");
+
+                foreach (var inheritedAttribute in methodInfo.InheritableAttributes)
+                    members.WriteLine(inheritedAttribute);
+
+                members.WriteLine
+                (
+                    $"public static {functionPointerType} {methodInfo.NameNonGeneric} => ({functionPointerType}){inheritedStruct.FullyQualifiedMetadataName}.MemberFunctionPointers.{methodInfo.NameNonGeneric};"
+                );
+            }
+        }
+
+        var source = members.ToString();
+
+        if (!sharedPointerBases.TryGetValue(source, out var baseName))
+        {
+            baseName = $"InheritedMemberFunctionPointers{sharedPointerBases.Count}";
+            sharedPointerBases.Add(source, baseName);
+        }
+
+        writer.WriteLine
+        (
+            $"public unsafe abstract partial class MemberFunctionPointers : global::{generatorNamespace}.{baseName}<{structInfo.Name}>"
+        );
 
         using (writer.WriteBlock())
         {
-            foreach (var (inheritedStruct, _, offset) in resolvedInheritanceOrder)
+            if (structInfo.MemberFunctions.IsEmpty)
             {
-                if (offset != 0)
-                    continue;
-
-                var methods = inheritedStruct.MemberFunctions.Select(function => function.MethodInfo)
-                                             .Concat(inheritedStruct.ExtraInheritedStructInfo?.MemberFunctionPointers ?? ImmutableArray<MethodInfo>.Empty);
-
-                foreach (var methodInfo in methods)
-                {
-                    if (methodInfo.Name == "Ctor"            ||
-                        HasOwnMethod(structInfo, methodInfo) ||
-                        !writtenPointers.Add(methodInfo.NameNonGeneric))
-                        continue;
-
-                    var thisPtrType = methodInfo.IsStatic ?
-                                          string.Empty :
-                                          $"{structInfo.Name}*, ";
-                    var functionPointerType =
-                        $"delegate* unmanaged <{thisPtrType}{methodInfo.GetParameterTypeStringWithTrailingTypeNoGenerics()}{methodInfo.ReturnTypeOrVoid}>";
-
-                    foreach (var inheritedAttribute in methodInfo.InheritableAttributes)
-                        writer.WriteLine(inheritedAttribute);
-
-                    writer.WriteLine
-                    (
-                        $"public static {functionPointerType} {methodInfo.NameNonGeneric} => ({functionPointerType}){inheritedStruct.FullyQualifiedMetadataName}.MemberFunctionPointers.{methodInfo.NameNonGeneric};"
-                    );
-                }
+                writer.WriteLine("private MemberFunctionPointers()");
+                writer.WriteLine("{");
+                writer.WriteLine("}");
             }
         }
+    }
+
+    private static string RenderInheritedMemberFunctionPointerBases(string generatorNamespace, Dictionary<string, string> sharedPointerBases)
+    {
+        using IndentedTextWriter writer = new();
+
+        writer.WriteLine($"namespace {generatorNamespace};");
+
+        foreach (var pair in sharedPointerBases)
+        {
+            writer.WriteLine("/// <summary>为具有相同继承成员的原生结构提供共享的成员函数指针。</summary>");
+            writer.WriteLine("/// <typeparam name=\"TSelf\">接收原生调用的派生结构类型。</typeparam>");
+            writer.WriteLine($"public unsafe abstract class {pair.Value}<TSelf> where TSelf : unmanaged");
+
+            using (writer.WriteBlock())
+            {
+                writer.WriteLine($"private protected {pair.Value}()");
+                writer.WriteLine("{");
+                writer.WriteLine("}");
+                writer.WriteLine(pair.Key);
+            }
+        }
+
+        return writer.ToString();
     }
 
     private static void RenderInheritedDelegateTypes
@@ -436,20 +499,8 @@ public sealed partial class InteropGenerator
                 writer.WriteLine(inheritedAttribute);
             }
 
-            if (offset == 0)
-            {
-                var paramNames = string.Empty;
-                if (methodInfo.Parameters.Any())
-                    paramNames = ", " + methodInfo.GetParameterNamesString();
-                writer.WriteLine
-                (
-                    $"{methodInfo.GetDeclarationStringWithoutPartial()} => {methodInfo.ReturnTypeCast}VirtualTable->{methodInfo.NameNonGeneric}(({structInfo.Name}*)global::System.Runtime.CompilerServices.Unsafe.AsPointer(ref this){paramNames});"
-                );
-            }
-            else
-            {
-                writer.WriteLine($"{methodInfo.GetDeclarationStringWithoutPartial()} => {path}.{methodInfo.Name}({methodInfo.GetParameterNamesString()});");
-            }
+            writer.WriteLine
+                ($"{methodInfo.GetDeclarationStringWithoutPartial()} => {path}.{methodInfo.Name}({methodInfo.GetParameterNamesStringWithGeneric()});");
         }
     }
 

@@ -288,10 +288,14 @@ public sealed partial class InteropGenerator
         IndentedTextWriter writer
     )
     {
-        writer.WriteLine("public unsafe static partial class MemberFunctionPointers");
+        writer.WriteLine("public unsafe abstract partial class MemberFunctionPointers");
 
         using (writer.WriteBlock())
         {
+            writer.WriteLine("private MemberFunctionPointers()");
+            writer.WriteLine("{");
+            writer.WriteLine("}");
+
             foreach (var mfi in structInfo.MemberFunctions)
             {
                 var thisPtrType = mfi.MethodInfo.IsStatic ?

@@ -94,14 +94,33 @@ public sealed partial class InteropGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput
         (
-            structInfosWithInheritedStructs,
-            static (sourceContext, item) =>
+            structInfosWithInheritedStructs.Collect().Combine(generatorOptionsProvider),
+            static (sourceContext, args) =>
             {
-                sourceContext.AddSource
-                (
-                    $"{item.targetStruct.FullyQualifiedMetadataName}.Inheritance.InteropGenerator.g.cs",
-                    RenderInheritedStructInfo(item.targetStruct, item.inheritedStructs, sourceContext.CancellationToken)
-                );
+                Dictionary<string, string> sharedPointerBases = new(StringComparer.Ordinal);
+
+                foreach (var item in args.Left)
+                {
+                    sourceContext.AddSource
+                    (
+                        $"{item.targetStruct.FullyQualifiedMetadataName}.Inheritance.InteropGenerator.g.cs",
+                        RenderInheritedStructInfo
+                        (
+                            item.targetStruct,
+                            item.inheritedStructs,
+                            args.Right.InteropNamespace,
+                            sharedPointerBases,
+                            sourceContext.CancellationToken
+                        )
+                    );
+                }
+
+                if (sharedPointerBases.Count != 0)
+                    sourceContext.AddSource
+                    (
+                        $"{args.Right.InteropNamespace}.InheritedMemberFunctionPointers.g.cs",
+                        RenderInheritedMemberFunctionPointerBases(args.Right.InteropNamespace, sharedPointerBases)
+                    );
             }
         );
         var structInfosWithAddresses = structInfos.Where(static sI => sI.HasSignatures()).Collect();
