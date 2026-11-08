@@ -25,13 +25,39 @@ public sealed partial class InteropGenerator : IIncrementalGenerator
                    )
                    .Where(static si => si is not null)!;
 
+        var generatorOptionsProvider = context.AnalyzerConfigOptionsProvider.Select
+        (static (options, _) =>
+            {
+                if (!options.GlobalOptions.TryGetValue("build_property.InteropGenerator_InteropNamespace", out var interopNamespace))
+                    interopNamespace = "FFXIVClientStructs.Expansion.Runtime.Generated";
+                return new GeneratorOptions
+                (
+                    interopNamespace
+                );
+            }
+        );
+
         context.RegisterSourceOutput
         (
-            structInfos,
-            static (sourceContext, item) =>
+            structInfos.Collect().Combine(generatorOptionsProvider),
+            static (sourceContext, args) =>
             {
-                if (item.NeedsRender())
-                    sourceContext.AddSource($"{item.FullyQualifiedMetadataName}.InteropGenerator.g.cs", RenderStructInfo(item, sourceContext.CancellationToken));
+                var addressIndex = 0;
+
+                foreach (var item in args.Left)
+                {
+                    if (item.NeedsRender())
+                        sourceContext.AddSource
+                        (
+                            $"{item.FullyQualifiedMetadataName}.InteropGenerator.g.cs",
+                            RenderStructInfo(item, addressIndex, args.Right.InteropNamespace, sourceContext.CancellationToken)
+                        );
+
+                    addressIndex += item.MemberFunctions.Length + item.StaticAddresses.Length;
+
+                    if (item.StaticVirtualTableSignature is not null)
+                        addressIndex++;
+                }
             }
         );
         var structInfosWithInheritance = structInfos.Where(static sI => sI.InheritedStructs.Length  != 0).Collect();
@@ -75,17 +101,6 @@ public sealed partial class InteropGenerator : IIncrementalGenerator
                 (
                     $"{item.targetStruct.FullyQualifiedMetadataName}.Inheritance.InteropGenerator.g.cs",
                     RenderInheritedStructInfo(item.targetStruct, item.inheritedStructs, sourceContext.CancellationToken)
-                );
-            }
-        );
-        var generatorOptionsProvider = context.AnalyzerConfigOptionsProvider.Select
-        (static (options, _) =>
-            {
-                if (!options.GlobalOptions.TryGetValue("build_property.InteropGenerator_InteropNamespace", out var interopNamespace))
-                    interopNamespace = "FFXIVClientStructs.Expansion.Runtime.Generated";
-                return new GeneratorOptions
-                (
-                    interopNamespace
                 );
             }
         );

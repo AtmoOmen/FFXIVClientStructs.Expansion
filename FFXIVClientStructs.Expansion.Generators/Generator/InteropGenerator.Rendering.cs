@@ -1,4 +1,6 @@
 using System.Collections.Immutable;
+using System.Globalization;
+using System.IO.Compression;
 using FFXIVClientStructs.Expansion.Generators.Helpers;
 using FFXIVClientStructs.Expansion.Generators.Models;
 using Microsoft.CodeAnalysis.CSharp;
@@ -10,6 +12,8 @@ public sealed partial class InteropGenerator
     private static string RenderStructInfo
     (
         StructInfo        structInfo,
+        int               addressIndex,
+        string            generatorNamespace,
         CancellationToken token
     )
     {
@@ -34,7 +38,7 @@ public sealed partial class InteropGenerator
 
         if (structInfo.HasSignatures())
         {
-            RenderAddresses(structInfo, writer);
+            RenderAddresses(structInfo, addressIndex, generatorNamespace, writer);
             token.ThrowIfCancellationRequested();
         }
 
@@ -52,7 +56,7 @@ public sealed partial class InteropGenerator
 
         if (!structInfo.MemberFunctions.IsEmpty)
         {
-            RenderMemberFunctions(structInfo, writer);
+            RenderMemberFunctions(structInfo, addressIndex, generatorNamespace, writer);
             token.ThrowIfCancellationRequested();
         }
 
@@ -98,6 +102,8 @@ public sealed partial class InteropGenerator
     private static void RenderAddresses
     (
         StructInfo         structInfo,
+        int                addressIndex,
+        string             generatorNamespace,
         IndentedTextWriter writer
     )
     {
@@ -107,23 +113,33 @@ public sealed partial class InteropGenerator
         {
             foreach (var mfi in structInfo.MemberFunctions)
             {
-                writer.WriteLine(GetAddressString(structInfo, mfi.MethodInfo.NameNonGeneric, mfi.SignatureInfo));
+                writer.WriteLine
+                (
+                    $"public static readonly global::InteropGenerator.Runtime.Address {mfi.MethodInfo.NameNonGeneric} = global::{generatorNamespace}.Addresses.Data[{addressIndex++}].Address;"
+                );
             }
 
             foreach (var sai in structInfo.StaticAddresses)
             {
-                writer.WriteLine(GetAddressString(structInfo, sai.MethodInfo.NameNonGeneric, sai.SignatureInfo));
+                writer.WriteLine
+                (
+                    $"public static readonly global::InteropGenerator.Runtime.Address {sai.MethodInfo.NameNonGeneric} = global::{generatorNamespace}.Addresses.Data[{addressIndex++}].Address;"
+                );
             }
 
             if (structInfo.StaticVirtualTableSignature is not null)
             {
-                writer.WriteLine(GetAddressString(structInfo, "StaticVirtualTable", structInfo.StaticVirtualTableSignature));
+                writer.WriteLine
+                (
+                    $"public static readonly global::InteropGenerator.Runtime.Address StaticVirtualTable = global::{generatorNamespace}.Addresses.Data[{addressIndex}].Address;"
+                );
             }
         }
     }
 
-    private static string GetAddressString
+    private static void WriteAddressData
     (
+        BinaryWriter  writer,
         StructInfo    structInfo,
         string        signatureName,
         SignatureInfo signatureInfo
@@ -131,29 +147,40 @@ public sealed partial class InteropGenerator
     {
         var paddedSignature = signatureInfo.GetPaddedSignature();
         var relativeOffsets = signatureInfo.GetRelCallAndJumpAdjustedOffset();
-        var offsets         = "new ushort[] {" + string.Join(", ", relativeOffsets) + "}";
-        var groupedSig = paddedSignature.Replace("??", "00").Split()
-                                        .Select((x, i) => new { Index = i, Value = x })
-                                        .GroupBy(x => x.Index / 8 * 3)
-                                        .Select(x => x.Select(v => v.Value))
-                                        .Select(x => "0x" + string.Join(string.Empty, x.Reverse()));
 
-        var ulongArraySignature = "new ulong[] {" + string.Join(", ", groupedSig) + "}";
-        var groupedSigMask = paddedSignature.Split()
-                                            .Select
-                                            (s => s == "??" ?
-                                                      "00" :
-                                                      "FF"
-                                            )
-                                            .Select((x, i) => new { Index = i, Value = x })
-                                            .GroupBy(x => x.Index / 8 * 3)
-                                            .Select(x => x.Select(v => v.Value))
-                                            .Select(x => "0x" + string.Join(string.Empty, x.Reverse()));
+        writer.Write($"{structInfo.FullyQualifiedMetadataName}.{signatureName}");
+        writer.Write(signatureInfo.Signature);
+        writer.Write(paddedSignature);
+        writer.Write(relativeOffsets.Length);
 
-        var ulongArrayMask = "new ulong[] {" + string.Join(", ", groupedSigMask) + "}";
+        foreach (var offset in relativeOffsets)
+            writer.Write(offset);
 
-        return
-            $"""public static readonly global::InteropGenerator.Runtime.Address {signatureName} = new global::InteropGenerator.Runtime.Address("{structInfo.FullyQualifiedMetadataName}.{signatureName}", "{paddedSignature}", {offsets}, {ulongArraySignature}, {ulongArrayMask}, 0);""";
+        var signatureBytes = paddedSignature.Split();
+        var wordCount      = signatureBytes.Length / sizeof(ulong);
+
+        writer.Write(wordCount);
+
+        for (var wordIndex = 0; wordIndex < wordCount; wordIndex++)
+        {
+            ulong bytes = 0;
+            ulong mask  = 0;
+
+            for (var byteIndex = 0; byteIndex < sizeof(ulong); byteIndex++)
+            {
+                var signatureByte = signatureBytes[(wordIndex * sizeof(ulong)) + byteIndex];
+
+                if (signatureByte == "??")
+                    continue;
+
+                var shift = byteIndex * 8;
+                bytes |= (ulong)byte.Parse(signatureByte, NumberStyles.HexNumber, CultureInfo.InvariantCulture) << shift;
+                mask  |= 0xFFUL                                                                                 << shift;
+            }
+
+            writer.Write(bytes);
+            writer.Write(mask);
+        }
     }
 
     private static void RenderVirtualTable
@@ -256,6 +283,8 @@ public sealed partial class InteropGenerator
     private static void RenderMemberFunctions
     (
         StructInfo         structInfo,
+        int                addressIndex,
+        string             generatorNamespace,
         IndentedTextWriter writer
     )
     {
@@ -288,7 +317,9 @@ public sealed partial class InteropGenerator
                 using (writer.WriteBlock())
                 {
                     writer.WriteLine
-                        ($"""InteropGenerator.Runtime.ThrowHelper.ThrowNullAddress("{structInfo.Name}.{mfi.MethodInfo.Name}", "{mfi.SignatureInfo.Signature}");""");
+                    (
+                        $"""InteropGenerator.Runtime.ThrowHelper.ThrowNullAddress("{structInfo.Name}.{mfi.MethodInfo.Name}", global::{generatorNamespace}.Addresses.Data[{addressIndex}].Signature);"""
+                    );
                 }
 
                 if (mfi.MethodInfo.IsStatic)
@@ -307,6 +338,8 @@ public sealed partial class InteropGenerator
                     );
                 }
             }
+
+            addressIndex++;
         }
     }
 
@@ -580,6 +613,49 @@ public sealed partial class InteropGenerator
 
         using (writer.WriteBlock())
         {
+            using var compressedData = new MemoryStream();
+
+            using (var compressor = new DeflateStream(compressedData, CompressionLevel.Optimal, true))
+            using (var dataWriter = new BinaryWriter(compressor))
+            {
+                var addressCount = structInfos.Sum
+                (structInfo => structInfo.MemberFunctions.Length +
+                               structInfo.StaticAddresses.Length +
+                               (structInfo.StaticVirtualTableSignature is null ?
+                                    0 :
+                                    1)
+                );
+
+                dataWriter.Write(addressCount);
+
+                foreach (var structInfo in structInfos)
+                {
+                    foreach (var memberFunction in structInfo.MemberFunctions)
+                        WriteAddressData(dataWriter, structInfo, memberFunction.MethodInfo.NameNonGeneric, memberFunction.SignatureInfo);
+
+                    foreach (var staticAddress in structInfo.StaticAddresses)
+                        WriteAddressData(dataWriter, structInfo, staticAddress.MethodInfo.NameNonGeneric, staticAddress.SignatureInfo);
+
+                    if (structInfo.StaticVirtualTableSignature is not null)
+                        WriteAddressData(dataWriter, structInfo, "StaticVirtualTable", structInfo.StaticVirtualTableSignature);
+                }
+            }
+
+            writer.WriteLine
+            (
+                "internal static readonly global::FFXIVClientStructs.Expansion.ExpansionAddressData[] Data = global::FFXIVClientStructs.Expansion.ExpansionAddressData.Load(new byte[]"
+            );
+            writer.WriteLine("{");
+            writer.IncreaseIndent();
+
+            var compressedBytes = compressedData.ToArray();
+
+            for (var offset = 0; offset < compressedBytes.Length; offset += 32)
+                writer.WriteLine(string.Join(", ", compressedBytes.Skip(offset).Take(32)) + ",");
+
+            writer.DecreaseIndent();
+            writer.WriteLine("});");
+
             writer.WriteLine("public static void Register(global::FFXIVClientStructs.Expansion.ExpansionResolver resolver)");
 
             using (writer.WriteBlock())
