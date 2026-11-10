@@ -156,39 +156,45 @@ public unsafe partial struct AgentKTGHud
     public bool HasDirector;
 
     /// <summary>
-    ///     是否已经把词条窗口的参数（界面值 1028 至 1031）下发过一次。
+    ///     是否已经增加 KTG 数值数组与字符串数组的引用计数。
     /// </summary>
     [FieldOffset(675)]
+    public bool ArrayDataReferenced;
+
+    /// <summary>
+    ///     是否已经把词条窗口的参数（界面值 1028 至 1031）下发过一次。
+    /// </summary>
+    [FieldOffset(676)]
     public bool EWordParamsSent;
 
     /// <summary>
     ///     是否已经把缩放与高度参数（界面值 1034 至 1038）读取并应用过一次。
     /// </summary>
-    [FieldOffset(676)]
+    [FieldOffset(677)]
     public bool ScaleParamsSent;
 
     /// <summary>
     ///     是否已经隐藏常规界面。
     /// </summary>
-    [FieldOffset(677)]
+    [FieldOffset(678)]
     public bool HudHidden;
 
     /// <summary>
     ///     是否已经隐藏聊天窗口。
     /// </summary>
-    [FieldOffset(678)]
+    [FieldOffset(679)]
     public bool ChatLogHidden;
 
     /// <summary>
     ///     是否已经接管目标系统。
     /// </summary>
-    [FieldOffset(679)]
+    [FieldOffset(680)]
     public bool TargetSystemTakenOver;
 
     /// <summary>
     ///     是否已经计算界面缩放与屏幕偏移。
     /// </summary>
-    [FieldOffset(680)]
+    [FieldOffset(681)]
     public bool LayoutInitialized;
 
     /// <summary>
@@ -433,7 +439,7 @@ public unsafe partial struct AgentKTGHud
     /// </summary>
     [MemberFunction
     (
-        "48 89 5C 24 ?? 48 89 74 24 ?? 48 89 7C 24 ?? 55 41 56 41 57 48 8D 6C 24 ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 ?? 48 8B F1 48 8B 49 ?? 48 8B 01 FF 50 ?? 48 8B C8 BA"
+        "48 89 5C 24 ?? 48 89 74 24 ?? 48 89 7C 24 ?? 55 41 56 41 57 48 8D 6C 24 ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 ?? 48 8B F1 48 8B 49 ?? 48 8B 01 FF 50 ?? 80 BE"
     )]
     public partial void OpenAddons();
 
