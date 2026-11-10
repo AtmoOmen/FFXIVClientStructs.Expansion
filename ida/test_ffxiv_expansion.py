@@ -31,6 +31,55 @@ class MetadataTests(unittest.TestCase):
         self.assertEqual(
             native_name("InteropGenerator.Runtime.CStringPointer"), "byte*"
         )
+        self.assertEqual(native_name("System.Guid"), "GUID")
+        self.assertEqual(native_name("System.Guid*"), "GUID*")
+        self.assertEqual(native_name("StdPair<System.Guid, byte>"), "StdPair<GUID, byte>")
+
+    def test_guid_size_and_alignment_in_generic_layout(self):
+        upstream = {
+            "enums": [],
+            "structs": [
+                {
+                    "type": "StdPair<int, byte>",
+                    "name": "StdPair",
+                    "fields": [
+                        {"name": "First", "type": "int", "offset": 0},
+                        {"name": "Second", "type": "byte", "offset": 4},
+                    ],
+                    "member_functions": [],
+                }
+            ],
+        }
+        expansion = {
+            "enums": [],
+            "structs": [
+                {
+                    "type": "Example",
+                    "name": "Example",
+                    "size": 56,
+                    "fields": [
+                        {"name": "Pair", "type": "StdPair<GUID, byte>", "offset": 0},
+                        {"name": "Marker", "type": "int", "offset": 20},
+                        {"name": "Ids", "type": "GUID", "offset": 24, "size": 2},
+                    ],
+                    "inherits": [],
+                    "member_functions": [],
+                    "static_member_functions": [],
+                    "static_members": [],
+                    "virtual_functions": [],
+                }
+            ],
+        }
+        result = merge_structs(expansion, upstream)
+        definitions = {item["type"]: item for item in result["structs"]}
+        pair = definitions["StdPair<GUID, byte>"]
+        self.assertEqual(pair["size"], 20)
+        self.assertEqual([field["offset"] for field in pair["fields"]], [0, 16])
+        self.assertEqual(
+            [field["name"] for field in definitions["Example"]["fields"]],
+            ["Pair", "Marker", "Ids"],
+        )
+        self.assertEqual(result["generated_types"], ["StdPair<GUID, byte>"])
 
     def test_overlay_keeps_base_fields_and_expands_to_effective_size(self):
         upstream = {

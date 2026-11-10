@@ -228,6 +228,7 @@ class Metadata:
 
 
 def native_name(name):
+    name = name.replace("System.Guid", "GUID")
     name = name.replace("InteropGenerator.Runtime.CStringPointer", "byte*")
     name = name.replace("InteropGenerator.Runtime.Pointer", "Pointer")
     for prefix in (
@@ -546,6 +547,8 @@ def merge_structs(expansion, upstream):
     def measure(name, require_alignment=False):
         if name.endswith("*"):
             return 8, 8
+        if name == "GUID":
+            return 16, 4
         if name in primitive_sizes:
             size = primitive_sizes[name]
             return size, size
@@ -569,7 +572,7 @@ def merge_structs(expansion, upstream):
             name in all_structs
             or name in enums
             or name in primitive_sizes
-            or name == "void"
+            or name in ("void", "GUID")
         ):
             return
         if name == "Vector3":
