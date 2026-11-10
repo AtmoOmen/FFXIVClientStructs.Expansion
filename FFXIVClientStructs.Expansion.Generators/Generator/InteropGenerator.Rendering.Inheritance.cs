@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using FFXIVClientStructs.Expansion.Generators.Extensions;
 using FFXIVClientStructs.Expansion.Generators.Helpers;
 using FFXIVClientStructs.Expansion.Generators.Models;
+using Microsoft.CodeAnalysis;
 
 namespace FFXIVClientStructs.Expansion.Generators.Generator;
 
@@ -126,9 +127,12 @@ public sealed partial class InteropGenerator
                 }
 
                 writer.WriteLine("[global::System.Runtime.CompilerServices.CompilerGeneratedAttribute]");
+                var fieldType = field.Type;
+                if (fieldType != $"global::{inheritedStruct.FullyQualifiedMetadataName}")
+                    fieldType = RebindInheritedType(fieldType, inheritedStruct, $"global::{structInfo.FullyQualifiedMetadataName}");
                 writer.WriteLine
                 (
-                    $"[global::System.Runtime.InteropServices.FieldOffsetAttribute({offset + field.Offset})] public {(field.IsReadOnly ? "readonly " : "")}{field.Type} {adjustedFieldName};"
+                    $"[global::System.Runtime.InteropServices.FieldOffsetAttribute({offset + field.Offset})] public {(field.IsReadOnly ? "readonly " : "")}{fieldType} {adjustedFieldName};"
                 );
             }
 
@@ -139,7 +143,7 @@ public sealed partial class InteropGenerator
 
         foreach (var (inheritedStruct, path, _) in resolvedInheritanceOrder)
         {
-            if (!inheritedStruct.MemberFunctions.IsEmpty)
+            if (!inheritedStruct.MemberFunctions.IsEmpty || !inheritedStruct.StaticAddresses.IsEmpty)
                 RenderInheritedMemberFunctions(structInfo, inheritedStruct, path, writer, writtenMethods);
         }
 
@@ -199,7 +203,20 @@ public sealed partial class InteropGenerator
         foreach (var (inheritedStruct, _, _) in resolvedInheritanceOrder)
         {
             if (!inheritedStruct.StringOverloads.IsEmpty)
-                RenderStringOverloads(inheritedStruct, writer);
+                RenderStringOverloads
+                (
+                    inheritedStruct with
+                    {
+                        StringOverloads = inheritedStruct.StringOverloads.Select
+                        (overload => overload with
+                            {
+                                MethodInfo = RebindInheritedMethod
+                                    (overload.MethodInfo, inheritedStruct, $"global::{structInfo.FullyQualifiedMetadataName}")
+                            }
+                        ).ToImmutableArray()
+                    },
+                    writer
+                );
         }
 
         token.ThrowIfCancellationRequested();
@@ -270,13 +287,14 @@ public sealed partial class InteropGenerator
     private static void RenderInheritedMemberFunctions
         (StructInfo structInfo, StructInfo inheritedStruct, string path, IndentedTextWriter writer, HashSet<string> writtenMethods)
     {
-        foreach (var (methodInfo, _) in inheritedStruct.MemberFunctions)
+        foreach (var methodInfo in inheritedStruct.MemberFunctions.Select(function => function.MethodInfo)
+                                                  .Concat(inheritedStruct.StaticAddresses.Select(address => address.MethodInfo)))
         {
             if (methodInfo.Name == "Ctor")
                 continue;
             if (HasOwnMethod(structInfo, methodInfo))
                 continue;
-            if (!writtenMethods.Add(GetMethodKey(methodInfo)))
+            if (!writtenMethods.Add(GetMethodKey(RebindInheritedMethod(methodInfo, inheritedStruct, $"global::{structInfo.FullyQualifiedMetadataName}"))))
                 continue;
             writer.WriteLine
                 ($"""/// <inheritdoc cref="{inheritedStruct.FullyQualifiedMetadataName}.{methodInfo.Name}({methodInfo.GetParameterTypeStringForCref()})" />""");
@@ -292,18 +310,7 @@ public sealed partial class InteropGenerator
                 writer.WriteLine(inheritedAttribute);
             }
 
-            if (methodInfo.IsStatic)
-            {
-                writer.WriteLine
-                (
-                    $"{methodInfo.GetDeclarationStringWithoutPartial()} => {methodInfo.ReturnTypeCast}{inheritedStruct.FullyQualifiedMetadataName}.{methodInfo.Name}({methodInfo.GetParameterNamesStringWithGeneric()});"
-                );
-            }
-            else
-            {
-                writer.WriteLine
-                    ($"{methodInfo.GetDeclarationStringWithoutPartial()} => {path}.{methodInfo.Name}({methodInfo.GetParameterNamesStringWithGeneric()});");
-            }
+            RenderInheritedMethodForwarder(structInfo, inheritedStruct, methodInfo, path, writer);
         }
     }
 
@@ -323,8 +330,9 @@ public sealed partial class InteropGenerator
 
                 foreach (var virtualFunctionInfo in inheritedStruct.VirtualFunctions)
                 {
+                    var method = RebindInheritedMethod(virtualFunctionInfo.MethodInfo, inheritedStruct, $"global::{structInfo.FullyQualifiedMetadataName}");
                     var functionPointerType =
-                        $"delegate* unmanaged <{structInfo.Name}*, {virtualFunctionInfo.MethodInfo.GetParameterTypeStringWithTrailingTypeNoGenerics()}{virtualFunctionInfo.MethodInfo.ReturnTypeOrVoid}>";
+                        $"delegate* unmanaged <{structInfo.Name}*, {method.GetParameterTypeStringWithTrailingTypeNoGenerics()}{method.ReturnTypeOrVoid}>";
                     foreach (var inheritedAttribute in virtualFunctionInfo.MethodInfo.InheritableAttributes)
                         writer.WriteLine(inheritedAttribute);
                     writer.WriteLine
@@ -376,8 +384,9 @@ public sealed partial class InteropGenerator
                 var thisPtrType = methodInfo.IsStatic ?
                                       string.Empty :
                                       "TSelf*, ";
+                var method = RebindInheritedMethod(methodInfo, inheritedStruct, "TSelf");
                 var functionPointerType =
-                    $"delegate* unmanaged <{thisPtrType}{methodInfo.GetParameterTypeStringWithTrailingTypeNoGenerics()}{methodInfo.ReturnTypeOrVoid}>";
+                    $"delegate* unmanaged <{thisPtrType}{method.GetParameterTypeStringWithTrailingTypeNoGenerics()}{method.ReturnTypeOrVoid}>";
 
                 members.WriteLine($"/// <inheritdoc cref=\"{inheritedStruct.FullyQualifiedMetadataName}.MemberFunctionPointers.{methodInfo.NameNonGeneric}\" />");
 
@@ -467,7 +476,8 @@ public sealed partial class InteropGenerator
                     if (!writtenDelegates.Add((methodInfo.NameNonGeneric, methodInfo.TypeArguments.Length)))
                         continue;
 
-                    RenderDelegateTypeForMethod(structInfo.Name, methodInfo, writer);
+                    RenderDelegateTypeForMethod
+                        (structInfo.Name, RebindInheritedMethod(methodInfo, inheritedStruct, $"global::{structInfo.FullyQualifiedMetadataName}"), writer);
                 }
             }
         }
@@ -481,7 +491,7 @@ public sealed partial class InteropGenerator
             if (offset != 0 && methodInfo.Name == "Dtor") continue;
             if (HasOwnMethod(structInfo, methodInfo))
                 continue;
-            if (!writtenMethods.Add(GetMethodKey(methodInfo)))
+            if (!writtenMethods.Add(GetMethodKey(RebindInheritedMethod(methodInfo, inheritedStruct, $"global::{structInfo.FullyQualifiedMetadataName}"))))
                 continue;
             writer.WriteLine
             (
@@ -499,8 +509,7 @@ public sealed partial class InteropGenerator
                 writer.WriteLine(inheritedAttribute);
             }
 
-            writer.WriteLine
-                ($"{methodInfo.GetDeclarationStringWithoutPartial()} => {path}.{methodInfo.Name}({methodInfo.GetParameterNamesStringWithGeneric()});");
+            RenderInheritedMethodForwarder(structInfo, inheritedStruct, methodInfo, path, writer);
         }
     }
 
@@ -513,7 +522,7 @@ public sealed partial class InteropGenerator
                 continue;
             if (HasOwnMethod(structInfo, methodInfo))
                 continue;
-            if (!writtenMethods.Add(GetMethodKey(methodInfo)))
+            if (!writtenMethods.Add(GetMethodKey(RebindInheritedMethod(methodInfo, inheritedStruct, $"global::{structInfo.FullyQualifiedMetadataName}"))))
                 continue;
             writer.WriteLine
             (
@@ -531,18 +540,7 @@ public sealed partial class InteropGenerator
                 writer.WriteLine(inheritedAttribute);
             }
 
-            if (methodInfo.IsStatic)
-            {
-                writer.WriteLine
-                (
-                    $"{methodInfo.GetDeclarationStringWithoutPartial()} => {inheritedStruct.FullyQualifiedMetadataName}.{methodInfo.Name}({methodInfo.GetParameterNamesStringWithGeneric()});"
-                );
-            }
-            else
-            {
-                writer.WriteLine
-                    ($"{methodInfo.GetDeclarationStringWithoutPartial()} => {path}.{methodInfo.Name}({methodInfo.GetParameterNamesStringWithGeneric()});");
-            }
+            RenderInheritedMethodForwarder(structInfo, inheritedStruct, methodInfo, path, writer);
         }
     }
 
@@ -566,18 +564,39 @@ public sealed partial class InteropGenerator
                 writer.WriteLine(inheritedAttribute);
             }
 
-            writer.WriteLine($"public {propertyInfo.RefKind.GetStringPrefix()}{propertyInfo.Type} {propertyInfo.Name}");
+            var propertyType = RebindInheritedType(propertyInfo.Type, inheritedStruct, $"global::{structInfo.FullyQualifiedMetadataName}");
+            var referencePrefix = propertyInfo.RefKind == RefKind.In ?
+                                      "ref readonly " :
+                                      propertyInfo.RefKind.GetStringPrefix();
+            writer.WriteLine($"public {referencePrefix}{propertyType} {propertyInfo.Name}");
 
             using (writer.WriteBlock())
             {
                 if (propertyInfo.Get)
                 {
-                    writer.WriteLine($"get => {propertyInfo.RefKind.GetStringPrefix()}{path}.{propertyInfo.Name};");
+                    if (propertyInfo.RefKind != RefKind.None && propertyInfo.Type != propertyType)
+                    {
+                        writer.WriteLine("get");
+
+                        using (writer.WriteBlock())
+                        {
+                            writer.WriteLine($"fixed ({propertyInfo.Type}* inheritedPointer = &{path}.{propertyInfo.Name})");
+                            using (writer.WriteBlock())
+                                writer.WriteLine($"return ref *({propertyType}*)inheritedPointer;");
+                        }
+                    }
+                    else
+                    {
+                        var getterPrefix = propertyInfo.RefKind == RefKind.None ?
+                                               string.Empty :
+                                               "ref ";
+                        writer.WriteLine($"get => {getterPrefix}{ConvertInheritedValue($"{path}.{propertyInfo.Name}", propertyInfo.Type, propertyType)};");
+                    }
                 }
 
                 if (propertyInfo.Set)
                 {
-                    writer.WriteLine($"set => {path}.{propertyInfo.Name} = value;");
+                    writer.WriteLine($"set => {path}.{propertyInfo.Name} = {ConvertInheritedValue("value", propertyType, propertyInfo.Type)};");
                 }
             }
         }
@@ -642,9 +661,13 @@ public sealed partial class InteropGenerator
                 writer.WriteLine(inheritedAttribute);
             }
 
+            var elementType   = RebindInheritedType(fixedSizeArrayInfo.Type, inheritedStruct, $"global::{structInfo.FullyQualifiedMetadataName}");
+            var arrayAccessor = $"{path}.{fixedSizeArrayInfo.FieldName}";
+            if (elementType != fixedSizeArrayInfo.Type)
+                arrayAccessor = $"global::System.Runtime.InteropServices.MemoryMarshal.Cast<{fixedSizeArrayInfo.Type}, {elementType}>({arrayAccessor})";
             writer.WriteLine
             (
-                $"[global::System.Diagnostics.CodeAnalysis.UnscopedRefAttribute] public Span<{fixedSizeArrayInfo.Type}> {fixedSizeArrayInfo.GetPublicFieldName()} => {path}.{fixedSizeArrayInfo.FieldName};"
+                $"[global::System.Diagnostics.CodeAnalysis.UnscopedRefAttribute] public Span<{elementType}> {fixedSizeArrayInfo.GetPublicFieldName()} => {arrayAccessor};"
             );
 
             if (fixedSizeArrayInfo.IsString)
@@ -772,7 +795,6 @@ public sealed partial class InteropGenerator
     private static bool HasOwnMethod(StructInfo structInfo, MethodInfo methodInfo)
     {
         var parameterSignature = GetParameterSignature(methodInfo);
-
         return structInfo.OwnMembers.Any
         (ownMember => ownMember.IsMethod                           &&
                       ownMember.Name            == methodInfo.Name &&
