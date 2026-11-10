@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 
@@ -12,7 +13,14 @@ def run():
     if not selected:
         return
     payload = json.loads(Path(selected).read_text(encoding="utf-8"))
-    entry = Path(payload["ffcs_ida"]) / "ffxiv_crossclient_ida.py"
+    directory = Path(payload["ffcs_ida"])
+    schema_spec = importlib.util.spec_from_file_location(
+        "structs_schema", directory / "structs_schema.py"
+    )
+    schema = importlib.util.module_from_spec(schema_spec)
+    schema_spec.loader.exec_module(schema)
+    sys.modules["structs_schema"] = schema
+    entry = directory / "ffxiv_crossclient_ida.py"
     spec = importlib.util.spec_from_file_location("ffxiv_crossclient_ida", entry)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

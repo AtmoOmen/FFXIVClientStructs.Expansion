@@ -1,8 +1,67 @@
 from __future__ import annotations
 
 import unittest
+import json
+import sys
+from pathlib import Path
+from types import ModuleType, SimpleNamespace
+from unittest.mock import Mock, patch
 
 from ffxiv_expansion_export import Reader, generic_parts, merge_structs, native_name
+from ffxiv_expansion_ida import run as import_expansion
+
+
+class ImportEntryTests(unittest.TestCase):
+    def test_schema_is_loaded_from_selected_directory_before_import(self):
+        directory = Path("selected-ffcs")
+        selected = "expansion.generated.json"
+        stale_schema = ModuleType("structs_schema")
+        loaded_schema = ModuleType("structs_schema")
+        loaded_schema.DefinedStructStaticMember = Mock()
+        specs = []
+
+        def create_spec(name, path):
+            spec = SimpleNamespace(name=name, path=path, loader=Mock())
+            specs.append(spec)
+            return spec
+
+        def create_module(spec):
+            if spec.name == "structs_schema":
+                return loaded_schema
+            module = ModuleType(spec.name)
+
+            def run(expansion_path):
+                self.assertEqual(expansion_path, selected)
+                from structs_schema import DefinedStructStaticMember
+
+                DefinedStructStaticMember("Instance", "signature", [3], "Example", True)
+
+            module.run = Mock(side_effect=run)
+            return module
+
+        with (
+            patch.dict(
+                sys.modules,
+                {
+                    "ida_kernwin": SimpleNamespace(ask_file=Mock(return_value=selected)),
+                    "structs_schema": stale_schema,
+                },
+            ),
+            patch.object(Path, "read_text", return_value=json.dumps({"ffcs_ida": str(directory)})),
+            patch("ffxiv_expansion_ida.importlib.util.spec_from_file_location", side_effect=create_spec),
+            patch("ffxiv_expansion_ida.importlib.util.module_from_spec", side_effect=create_module),
+        ):
+            import_expansion()
+            self.assertIs(sys.modules["structs_schema"], loaded_schema)
+
+        self.assertEqual(
+            [spec.path for spec in specs],
+            [directory / "structs_schema.py", directory / "ffxiv_crossclient_ida.py"],
+        )
+        specs[0].loader.exec_module.assert_called_once_with(loaded_schema)
+        loaded_schema.DefinedStructStaticMember.assert_called_once_with(
+            "Instance", "signature", [3], "Example", True
+        )
 
 
 class MetadataTests(unittest.TestCase):
