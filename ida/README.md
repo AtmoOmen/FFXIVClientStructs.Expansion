@@ -1,31 +1,31 @@
-# 扩展项目 IDA 导入
 
-`ffxiv_expansion_export.py` 直接读取编译后程序集的元数据，导出结构、枚举、字段偏移、继承、固定数组、位域说明与原生函数声明，并在指定客户端中解析地址。不需要维护扩展项目的人工地址表。
+# 脚本说明
 
-需要 Python 3.10 或更高版本，以及 `dnfile`、`PyYAML`、`pefile`、`capstone`。本目录通过 FFCS 新增的 `ffxiv_crossclient.py` 复用客户端解析能力，通过 `ffxiv_crossclient_ida.py` 复用导入入口。
+## 导入至 IDA
 
-## 导出
+### 运行要求
 
-先正常构建扩展项目。若需要一并导入中文 XML Doc，可以在构建解决方案时指定 `-p:GenerateDocumentationFile=true`；导出器会读取程序集旁的同名 XML 文件。导出器不会加载或执行扩展程序集中的原生互操作代码。
+- Python 3.10 及更高版本，以及 `dnfile`、`PyYAML`、`pefile`、`capstone`。
+- 国服 FFXIVClientStructs 项目（下称：FFCS）独有的 `ffxiv_crossclient.py` 和 `ffxiv_crossclient_ida.py` 脚本。
+- IDA 9 及更高版本。
+- Powershell 7 及更高版本。
 
-在当前 `ida` 目录执行：
+### 运行过程
+
+1. 完成 FFCS 项目的 IDA 导入。
+2. 构建本项目。推荐指定 `-p:GenerateDocumentationFile=true`。导出脚本会一并读取程序集旁同名 XML 文件，并在后续处理为 IDA 中的注释。
+3. 在当前目录执行下面的 Powershell 指令：
 
 ```powershell
-$ffcsIda = 'D:\Personal\Document\GitHub\Dalamud\lib\FFXIVClientStructs\ida'
+$ffcsIDA = 'D:\Personal\Document\GitHub\Dalamud\lib\FFXIVClientStructs\ida'
 $assembly = '..\FFXIVClientStructs.Expansion\bin\Debug\FFXIVClientStructs.Expansion.dll'
 $client = 'E:\Program Files (x86)\SquareEnix\FINAL FANTASY XIV - A Realm Reborn\clients\7.57hf1\ffxiv_dx11.exe'
 
-python -X utf8 -B .\ffxiv_expansion_export.py --assembly $assembly --ffcs-ida $ffcsIda --client $client --output .\expansion.generated.json
+python -X utf8 -B .\ffxiv_expansion_export.py --assembly $assembly --ffcs-ida $ffcsIDA --client $client --output .\expansion.generated.json
 ```
 
-国服使用相同命令，将 `--client` 改为国服程序，并指定另一份输出文件即可。
+将 `ffcsIDA` 路径替换为本机环境下的国服 FFCS 相关路径；将 `client` 路径替换为本机环境下的目标导入客户端，不局限于特定服务器客户端。
 
-导出文件保留程序集与客户端的 SHA-256、已解析签名以及未解析声明。未解析声明保留类型信息，但不会凭借不确定匹配应用地址。使用另一个客户端或重新构建后的程序集时，应重新导出。
+在当前目录下，将输出包含符号信息的 `expansion.generated.json` 文件。其中包含指定的 FFCS 路径，因此在此期间如果移动了 FFCS 目录，应使用新路径重新导出。
 
-## 在 IDA 中导入
-
-先完成 FFCS 基础类型的导入，再运行本目录的 `ffxiv_expansion_ida.py`，选择刚生成的 JSON。JSON 记录导出时指定的 FFCS `ida` 路径，因此不需要将上游脚本复制到扩展项目。若移动了 FFCS 目录，应使用新路径重新导出。
-
-入口会更新扩展类型并导入缺失依赖，已有基础依赖类型直接复用。位域信息与可用的 XML Doc 会写入成员说明。
-
-导入中断后可以重新运行入口并选择同一份 JSON。更换客户端或重新构建程序集后，应先重新导出。
+4. 在 IDA 中选择运行本目录的 `ffxiv_expansion_ida.py` 脚本，在弹出的文件选择对话框中选择上一步生成的 `expansion.generated.json` 文件。等待脚本运行完成即可。
