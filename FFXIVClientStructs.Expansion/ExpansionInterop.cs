@@ -9,13 +9,14 @@ public static class ExpansionInterop
     private static readonly ExpansionResolver Resolver = new();
 
     /// <summary>
-    ///     注册本程序集声明的全部原生地址并完成解析。
+    ///     注册本程序集声明的全部原生地址并完成解析，未能解析的地址仅记录错误，不中断初始化。
     /// </summary>
     /// <param name="moduleCopyPointer">用于签名扫描的模块副本基址。</param>
-    /// <exception cref="InvalidOperationException">存在未能解析的原生地址。</exception>
+    /// <param name="logError">由调用方提供的错误日志输出方法，接收包含未解析地址名称的完整错误消息。</param>
     public static void Initialize
     (
-        nint moduleCopyPointer
+        nint           moduleCopyPointer,
+        Action<string> logError
     )
     {
         lock (SyncRoot)
@@ -29,7 +30,7 @@ public static class ExpansionInterop
                                      .ToArray();
 
             if (unresolved.Length != 0)
-                throw new InvalidOperationException($"Unresolved native addresses: {string.Join(", ", unresolved)}");
+                logError($"[FFXIVClientStructs.Expansion] 未能解析以下地址：\n{string.Join("\n", unresolved)}");
         }
     }
 
