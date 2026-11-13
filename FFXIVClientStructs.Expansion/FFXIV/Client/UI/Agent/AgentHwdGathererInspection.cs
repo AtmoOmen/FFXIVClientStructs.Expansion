@@ -472,7 +472,7 @@ public unsafe partial struct AgentHwdGathererInspection
     );
 
     /// <summary>
-    ///     设置当前采集品类别，清空并解除全部待提交槽位，随后刷新主界面。
+    ///     设置当前采集品类别，清空并解除全部待提交槽位，不刷新主界面。
     /// </summary>
     /// <param name="category">采集品类别。</param>
     [MemberFunction("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 56 41 57 48 83 EC ?? 45 33 FF 44 0F B6 F2")]
@@ -568,7 +568,7 @@ public unsafe partial struct AgentHwdGathererInspection
         internal FixedSizeArray5<SubmitProgress> ProgressStorage;
 
         /// <summary>
-        ///     全部已选采集品的累计提交量。
+        ///     全部已选采集品可获得的振兴票总数。
         /// </summary>
         [FieldOffset(3992)]
         public uint TotalAmount;
@@ -641,9 +641,13 @@ public unsafe partial struct AgentHwdGathererInspection
         public ushort DisplayedAmount;
 
         /// <summary>
-        ///     界面状态位：第 0 位表示奖励阶段已结束，第 1 位表示鉴定尚未就绪，第 2 位表示可提交列表待重建。
+        ///     状态位：第 0 位表示全部检验表已加载，第 1 位表示检验冷却已结束。
+        ///     第 2 位由客户端运行状态写入，参与当前阶段物品奖励的判断。
         /// </summary>
         [FieldOffset(4050)]
+        [BitField<bool>(nameof(IsDataLoaded),          0)]
+        [BitField<bool>(nameof(IsInspectionAvailable), 1)]
+        [BitField<bool>(nameof(HasSpecialRewardState), 2)]
         public byte StateFlags;
 
         /// <summary>
@@ -805,13 +809,13 @@ public unsafe partial struct AgentHwdGathererInspection
         public struct SubmitProgress
         {
             /// <summary>
-            ///     该背包格中物品的堆叠数量。
+            ///     该组鉴定产物的物品 id。
             /// </summary>
             [FieldOffset(0)]
-            public uint Amount;
+            public uint ResultItemID;
 
             /// <summary>
-            ///     已满足的单次鉴定所需数量。
+            ///     该组实际消耗的采集品总数，为背包堆叠数量向下取单次鉴定需求数量的整数倍。
             /// </summary>
             [FieldOffset(4)]
             public uint Satisfied;
