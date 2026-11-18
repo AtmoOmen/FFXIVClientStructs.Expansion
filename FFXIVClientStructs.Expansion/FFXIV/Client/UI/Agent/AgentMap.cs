@@ -30,6 +30,10 @@ public unsafe partial struct AgentMap
     [FieldOffset(23128)]
     public uint SelectedMapType;
 
+    /// <summary>已输出至地图扩展数组的标记数量，包含各绘制分组的占位标记。</summary>
+    [FieldOffset(23168)]
+    public int RenderedMapMarkerCount;
+
     /// <summary>构建大区候选和界面刷新参数。</summary>
     [MemberFunction("48 89 54 24 ?? 53 55 56 57 41 54 41 55 41 56 41 57 48 83 EC ?? 33 ED")]
     public partial void BuildRegionSelection(AtkValue* values);
@@ -75,6 +79,12 @@ public unsafe partial struct AgentMap
         bool             omitAetherytes,
         bool             onlyAetherytes
     );
+
+    /// <summary>根据各绘制分组与扩展数组中的标记，生成地图数字数组内的交互和附加图标数据。</summary>
+    /// <param name="numbers">地图界面订阅的数字数组。</param>
+    /// <param name="markers">已按绘制分组输出的地图标记扩展数组。</param>
+    [MemberFunction("48 89 5C 24 ?? 4C 89 44 24 ?? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ?? ?? ?? ?? 48 8B F9")]
+    public partial void BuildMapMarkerInteractionData(NumberArrayData* numbers, ExtendArrayData* markers);
 
     /// <summary>游戏拥有的大区候选项。</summary>
     [GenerateInterop]
