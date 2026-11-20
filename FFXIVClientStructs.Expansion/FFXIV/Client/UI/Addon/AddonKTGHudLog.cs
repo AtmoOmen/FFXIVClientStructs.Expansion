@@ -1,7 +1,7 @@
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using FFXIVClientStructs.Interop;
 
-namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI;
+namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Addon;
 
 /// <summary>
 ///     打字游戏的 HUD 日志窗口（KTGHudLog）。<br />

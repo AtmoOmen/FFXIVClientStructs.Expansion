@@ -1,7 +1,7 @@
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 
-namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI;
+namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Addon;
 
 /// <summary>
 ///     打字游戏的结果窗口（KTGResult）。<br />

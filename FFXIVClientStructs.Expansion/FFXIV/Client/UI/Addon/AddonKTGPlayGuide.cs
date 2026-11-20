@@ -1,6 +1,6 @@
 using FFXIVClientStructs.FFXIV.Component.GUI;
 
-namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI;
+namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Addon;
 
 /// <summary>
 ///     打字游戏的操作指南窗口（KTGPlayGuide）。<br />

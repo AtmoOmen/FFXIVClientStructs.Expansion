@@ -2,7 +2,7 @@ using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.STD;
 
-namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Agent;
+namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI;
 
 /// <summary>
 ///     制作笔记的配方搜索上下文，按批扫描 Recipe 表并把命中的配方写入结果列表。

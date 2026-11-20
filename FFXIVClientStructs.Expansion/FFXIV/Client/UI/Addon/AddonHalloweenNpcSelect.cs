@@ -2,7 +2,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using FFXIVClientStructs.Interop;
 using FFXIVClientStructs.STD;
 
-namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI;
+namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Addon;
 
 /// <summary>
 ///     “选择变身角色”窗口（HalloweenNpcSelect）。<br />

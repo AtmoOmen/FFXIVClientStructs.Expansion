@@ -1,6 +1,6 @@
 using NativeAddonLookingForGroupDetail = FFXIVClientStructs.FFXIV.Client.UI.AddonLookingForGroupDetail;
 
-namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI;
+namespace FFXIVClientStructs.Expansion.FFXIV.Client.UI.Addon;
 
 [GenerateInterop]
 [Inherits<NativeAddonLookingForGroupDetail>]
